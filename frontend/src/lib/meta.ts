@@ -1,0 +1,24 @@
+import type { Priority, Role, TaskStatus } from "../api/types";
+
+export const STATUSES: TaskStatus[] = ["todo", "in_progress", "completed"];
+export const PRIORITIES: Priority[] = ["urgent", "high", "medium", "low"];
+export const ROLES: Role[] = ["owner", "admin", "member"];
+
+export const STATUS_META: Record<TaskStatus, { label: string; dot: string; bar: string }> = {
+  todo: { label: "To Do", dot: "bg-slate-400", bar: "bg-slate-300" },
+  in_progress: { label: "In Progress", dot: "bg-amber-500", bar: "bg-amber-400" },
+  completed: { label: "Completed", dot: "bg-emerald-500", bar: "bg-emerald-500" },
+};
+
+export const PRIORITY_META: Record<Priority, { label: string; badge: string }> = {
+  urgent: { label: "Urgent", badge: "bg-red-50 text-red-700 ring-red-600/20" },
+  high: { label: "High", badge: "bg-orange-50 text-orange-700 ring-orange-600/20" },
+  medium: { label: "Medium", badge: "bg-sky-50 text-sky-700 ring-sky-600/20" },
+  low: { label: "Low", badge: "bg-slate-50 text-slate-600 ring-slate-500/20" },
+};
+
+export const ROLE_META: Record<Role, { label: string; badge: string }> = {
+  owner: { label: "Owner", badge: "bg-indigo-50 text-indigo-700 ring-indigo-600/20" },
+  admin: { label: "Admin", badge: "bg-violet-50 text-violet-700 ring-violet-600/20" },
+  member: { label: "Member", badge: "bg-slate-50 text-slate-600 ring-slate-500/20" },
+};
