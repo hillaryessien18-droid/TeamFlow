@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { OrgProvider } from "./context/OrgContext";
 import { ActivityPage } from "./pages/ActivityPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ForgotPasswordPage, ResetPasswordPage } from "./pages/PasswordResetPages";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -18,9 +19,9 @@ import { TeamPage } from "./pages/TeamPage";
 function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-3 text-center">
-      <p className="text-sm font-semibold text-indigo-600">404</p>
+      <p className="text-sm font-semibold text-brand-600">404</p>
       <h1 className="text-2xl font-semibold text-slate-900">Page not found</h1>
-      <Link to="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+      <Link to="/" className="text-sm font-medium text-brand-600 hover:text-brand-500">
         Go to dashboard →
       </Link>
     </div>
@@ -31,6 +32,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<PublicOnly />}>
+        <Route path="/welcome" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />

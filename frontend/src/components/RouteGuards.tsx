@@ -7,7 +7,11 @@ export function RequireAuth() {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <PageLoader label="Signing you in…" />;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  if (!user) {
+    // Visitors hitting the root see the marketing page; deep links go to login and come back after.
+    if (location.pathname === "/") return <Navigate to="/welcome" replace />;
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
+  }
   return <Outlet />;
 }
 

@@ -4,9 +4,10 @@ import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import { authApi } from "../api/endpoints";
-import { RequireAuth } from "../components/RouteGuards";
+import { PublicOnly, RequireAuth } from "../components/RouteGuards";
 import { AuthProvider } from "../context/AuthContext";
 import { alice } from "../test/fixtures";
+import { LandingPage } from "./LandingPage";
 import { LoginPage } from "./LoginPage";
 import { ResetPasswordPage } from "./PasswordResetPages";
 import { RegisterPage } from "./RegisterPage";
@@ -28,6 +29,9 @@ function renderAt(path: string) {
     <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthProvider>
         <Routes>
+          <Route element={<PublicOnly />}>
+            <Route path="/welcome" element={<LandingPage />} />
+          </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -91,6 +95,22 @@ describe("authentication flow", () => {
     localStorage.setItem("teamflow.refresh", "r");
     mocked.me.mockResolvedValue(alice);
     renderAt("/");
+    expect(await screen.findByText("Dashboard home")).toBeInTheDocument();
+  });
+});
+
+describe("landing page", () => {
+  it("is shown to anonymous visitors at the root URL", () => {
+    renderAt("/");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Plan the work.");
+    expect(screen.getAllByRole("link", { name: /get started free/i })[0]).toHaveAttribute("href", "/register");
+  });
+
+  it("sends signed-in users straight to their dashboard", async () => {
+    localStorage.setItem("teamflow.access", "a");
+    localStorage.setItem("teamflow.refresh", "r");
+    mocked.me.mockResolvedValue(alice);
+    renderAt("/welcome");
     expect(await screen.findByText("Dashboard home")).toBeInTheDocument();
   });
 });
