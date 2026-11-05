@@ -27,7 +27,8 @@ def test_cannot_assign_to_non_member(client_for, org_setup, project):
     res = client_for(org_setup["member"]).post(
         "/api/tasks/", {"project": project.pk, "title": "x", "assignee": org_setup["outsider"].pk}, format="json"
     )
-    assert res.status_code == 400 and "assignee" in res.data
+    assert res.status_code == 400
+    assert "assignee" in res.data
 
 
 def test_outsider_cannot_create_task(client_for, org_setup, project):
@@ -89,7 +90,8 @@ def test_move_reorders_columns(client_for, org_setup, make_task):
         ("D", 0),
         ("A", 1),
     ]
-    assert d.pk and b.pk
+    assert d.pk
+    assert b.pk
 
 
 def test_delete_requires_admin_or_creator(client_for, org_setup, make_task):

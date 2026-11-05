@@ -11,7 +11,8 @@ def test_register_returns_user_and_tokens(client_for):
     )
     assert res.status_code == 201
     assert res.data["user"]["email"] == "new@example.com"
-    assert res.data["access"] and res.data["refresh"]
+    assert res.data["access"]
+    assert res.data["refresh"]
 
 
 def test_register_rejects_duplicate_email_and_weak_password(client_for, make_user):
@@ -21,7 +22,8 @@ def test_register_rejects_duplicate_email_and_weak_password(client_for, make_use
         {"email": "TAKEN@example.com", "full_name": "X", "password": "Very-secret-123"},
         format="json",
     )
-    assert res.status_code == 400 and "email" in res.data
+    assert res.status_code == 400
+    assert "email" in res.data
 
     res = client_for().post(
         "/api/auth/register/", {"email": "a@example.com", "full_name": "A", "password": "123"}, format="json"

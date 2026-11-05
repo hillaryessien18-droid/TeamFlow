@@ -7,7 +7,8 @@ def test_admin_creates_project_member_cannot(client_for, org_setup):
         "/api/projects/", {"organization": org, "name": "Launch", "description": "Q3 launch"}, format="json"
     )
     assert res.status_code == 201
-    assert res.data["status"] == "active" and res.data["progress"] == 0
+    assert res.data["status"] == "active"
+    assert res.data["progress"] == 0
 
     res = client_for(org_setup["member"]).post("/api/projects/", {"organization": org, "name": "Nope"}, format="json")
     assert res.status_code == 403

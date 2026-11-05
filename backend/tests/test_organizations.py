@@ -38,7 +38,8 @@ def test_admin_can_add_member_but_not_owner(client_for, org_setup, make_user):
     admin = client_for(org_setup["admin"])
 
     res = admin.post("/api/memberships/", {"organization": org.pk, "email": "NEWBIE@example.com"}, format="json")
-    assert res.status_code == 201 and res.data["role"] == "member"
+    assert res.status_code == 201
+    assert res.data["role"] == "member"
     assert Membership.objects.filter(organization=org, user=newbie).exists()
 
     other = make_user()
