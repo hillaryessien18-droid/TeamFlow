@@ -21,12 +21,12 @@ function Sidebar({ onCreateOrg }: { onCreateOrg: () => void }) {
   const navigate = useNavigate();
 
   return (
-    <div className="flex h-full flex-col gap-6 bg-white px-4 py-5">
-      <Logo className="px-2" />
+    <div className="flex h-full flex-col gap-6 bg-brand-600 px-4 py-5 text-brand-100">
+      <Logo className="px-2" tone="light" />
 
       {current && (
         <div className="space-y-1.5">
-          <label htmlFor="org-switcher" className="px-2 text-xs font-medium uppercase tracking-wide text-slate-400">
+          <label htmlFor="org-switcher" className="px-2 text-xs font-semibold uppercase tracking-wider text-brand-300">
             Organization
           </label>
           <select
@@ -40,7 +40,7 @@ function Sidebar({ onCreateOrg }: { onCreateOrg: () => void }) {
               selectOrg(Number(event.target.value));
               navigate("/");
             }}
-            className="block w-full rounded-md border-0 py-2 pl-3 pr-8 text-sm font-medium text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-indigo-600"
+            className="block w-full rounded-lg border-0 bg-white/10 py-2 pl-3 pr-8 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 focus:ring-2 focus:ring-emerald-300 [&>option]:text-slate-900"
           >
             {organizations.map((org) => (
               <option key={org.id} value={org.id}>
@@ -50,7 +50,7 @@ function Sidebar({ onCreateOrg }: { onCreateOrg: () => void }) {
             <option value="new">+ New organization…</option>
           </select>
           {current.my_role && (
-            <div className="flex items-center gap-2 px-2 text-xs text-slate-500">
+            <div className="flex items-center gap-2 px-2 text-xs text-brand-200">
               Your role: <RoleBadge role={current.my_role} />
             </div>
           )}
@@ -65,8 +65,8 @@ function Sidebar({ onCreateOrg }: { onCreateOrg: () => void }) {
             end={end}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition",
-                isActive ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
+                isActive ? "bg-white text-brand-600 shadow-sm" : "text-brand-100 hover:bg-white/10 hover:text-white",
               )
             }
           >
@@ -76,24 +76,24 @@ function Sidebar({ onCreateOrg }: { onCreateOrg: () => void }) {
         ))}
       </nav>
 
-      <div className="space-y-1 border-t border-slate-100 pt-4">
+      <div className="space-y-1 border-t border-white/10 pt-4">
         <NavLink
           to="/profile"
           className={({ isActive }) =>
-            cn("flex items-center gap-3 rounded-md px-2 py-2", isActive ? "bg-indigo-50" : "hover:bg-slate-50")
+            cn("flex items-center gap-3 rounded-lg px-2 py-2", isActive ? "bg-white/15" : "hover:bg-white/10")
           }
         >
           <Avatar user={user} />
           <span className="min-w-0">
-            <span className="block truncate text-sm font-medium text-slate-900">{user?.full_name}</span>
-            <span className="block truncate text-xs text-slate-500">{user?.email}</span>
+            <span className="block truncate text-sm font-semibold text-white">{user?.full_name}</span>
+            <span className="block truncate text-xs text-brand-300">{user?.email}</span>
           </span>
-          <UserIcon className="ml-auto size-4 text-slate-400" />
+          <UserIcon className="ml-auto size-4 text-brand-300" />
         </NavLink>
         <button
           type="button"
           onClick={() => void logout()}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-brand-100 hover:bg-white/10 hover:text-white"
         >
           <LogoutIcon className="size-5" /> Log out
         </button>
@@ -107,7 +107,7 @@ function Onboarding() {
   const { reload, selectOrg } = useOrg();
   return (
     <div className="mx-auto max-w-lg py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">Welcome, {user?.full_name.split(" ")[0]} 👋</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-brand-600">Welcome, {user?.full_name.split(" ")[0]} 👋</h1>
       <p className="mt-2 text-sm text-slate-600">
         Create an organization to start managing projects. You'll be its owner and can invite teammates by email. If a
         teammate already added you to theirs, it will show up here once they do.
@@ -135,7 +135,7 @@ export function Layout() {
 
   return (
     <div className="min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
         <Sidebar onCreateOrg={() => setCreatingOrg(true)} />
       </aside>
 

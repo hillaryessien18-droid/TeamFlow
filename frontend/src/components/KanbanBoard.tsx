@@ -4,7 +4,7 @@ import type { Task, TaskStatus } from "../api/types";
 import { groupByStatus } from "../lib/board";
 import { formatDate } from "../lib/format";
 import { STATUSES, STATUS_META } from "../lib/meta";
-import { CalendarIcon, ChatIcon, PlusIcon } from "./icons";
+import { CalendarIcon, ChatIcon, CheckIcon, PlusIcon } from "./icons";
 import { Avatar, cn, PriorityBadge } from "./ui";
 
 interface Props {
@@ -83,13 +83,13 @@ export function KanbanBoard({ tasks, readOnly = false, onMove, onOpen, onAdd }: 
             }}
             onDrop={(event) => drop(event, status)}
             className={cn(
-              "flex min-h-64 flex-col rounded-xl bg-slate-100/80 p-3 transition",
-              isTarget && "bg-indigo-50 ring-2 ring-indigo-200",
+              "flex min-h-64 flex-col rounded-2xl bg-brand-50/70 p-3 ring-1 ring-brand-100 transition",
+              isTarget && "bg-brand-100/70 ring-2 ring-brand-300",
             )}
           >
             <header className="mb-3 flex items-center gap-2 px-1">
               <span className={cn("size-2 rounded-full", meta.dot)} />
-              <h2 className="text-sm font-semibold text-slate-700">{meta.label}</h2>
+              <h2 className="text-sm font-bold text-brand-600">{meta.label}</h2>
               <span className="rounded-full bg-white px-2 text-xs font-medium text-slate-500 ring-1 ring-slate-200">
                 {column.length}
               </span>
@@ -143,7 +143,7 @@ export function KanbanBoard({ tasks, readOnly = false, onMove, onOpen, onAdd }: 
 }
 
 function DropLine() {
-  return <div className="mb-2 h-1 rounded-full bg-indigo-400" aria-hidden="true" />;
+  return <div className="mb-2 h-1 rounded-full bg-brand-400" aria-hidden="true" />;
 }
 
 interface CardProps {
@@ -172,14 +172,19 @@ function TaskCard({ task, draggable, dragging, onOpen, onDragStart, onDragEnd }:
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={cn(
-        "cursor-pointer rounded-lg bg-white p-3 shadow-sm ring-1 ring-slate-200 transition hover:ring-indigo-300 focus-visible:outline-2 focus-visible:outline-indigo-600",
+        "cursor-pointer rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-px hover:shadow-md hover:ring-brand-300 focus-visible:outline-2 focus-visible:outline-brand-600",
         draggable && "active:cursor-grabbing",
         dragging && "opacity-40",
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className={cn("text-sm font-medium text-slate-900", task.status === "completed" && "text-slate-500 line-through")}>
-          {task.title}
+        <h3 className={cn("flex items-start gap-1.5 font-sans text-sm font-semibold text-slate-800", task.status === "completed" && "text-slate-400")}>
+          {task.status === "completed" && (
+            <span className="mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <CheckIcon className="size-2.5" />
+            </span>
+          )}
+          <span className={cn(task.status === "completed" && "line-through")}>{task.title}</span>
         </h3>
         <PriorityBadge priority={task.priority} />
       </div>
