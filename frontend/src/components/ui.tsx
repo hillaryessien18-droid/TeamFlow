@@ -16,7 +16,7 @@ export function cn(...classes: (string | false | null | undefined)[]) {
 }
 
 const BUTTON_VARIANTS = {
-  primary: "bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-indigo-600",
+  primary: "bg-brand-600 text-white shadow-sm hover:bg-brand-500 focus-visible:outline-brand-600",
   secondary: "bg-white text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50",
   danger: "bg-red-600 text-white shadow-sm hover:bg-red-500 focus-visible:outline-red-600",
   ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
@@ -43,7 +43,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
         size === "sm" ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2 text-sm",
         BUTTON_VARIANTS[variant],
         className,
@@ -79,7 +79,7 @@ export function Field({
 }
 
 const CONTROL =
-  "block w-full rounded-md border-0 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-slate-50 disabled:text-slate-500";
+  "block w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-600 disabled:bg-slate-50 disabled:text-slate-500";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(
   { className, ...props },
@@ -132,7 +132,7 @@ export function PageLoader({ label = "Loading…" }: { label?: string }) {
 }
 
 const AVATAR_COLORS = [
-  "bg-indigo-100 text-indigo-700",
+  "bg-brand-100 text-brand-700",
   "bg-emerald-100 text-emerald-700",
   "bg-amber-100 text-amber-800",
   "bg-rose-100 text-rose-700",
@@ -191,7 +191,7 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
       className="h-2 w-full overflow-hidden rounded-full bg-slate-100"
     >
       <div
-        className={cn("h-full rounded-full transition-all", clamped === 100 ? "bg-emerald-500" : "bg-indigo-500")}
+        className={cn("h-full rounded-full transition-all", clamped === 100 ? "bg-emerald-500" : "bg-brand-500")}
         style={{ width: `${clamped}%` }}
       />
     </div>
@@ -199,7 +199,7 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
 }
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn("rounded-lg bg-white shadow-sm ring-1 ring-slate-200", className)}>{children}</div>;
+  return <div className={cn("rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80", className)}>{children}</div>;
 }
 
 export function EmptyState({
@@ -212,8 +212,8 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border-2 border-dashed border-slate-200 px-6 py-12 text-center">
-      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+    <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white/50 px-6 py-12 text-center">
+      <h3 className="text-base font-bold text-brand-600">{title}</h3>
       {description && <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -232,7 +232,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-brand-600 sm:text-3xl">{title}</h1>
         {description && <div className="mt-1 text-sm text-slate-500">{description}</div>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}

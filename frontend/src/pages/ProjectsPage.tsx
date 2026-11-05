@@ -121,7 +121,7 @@ export function ProjectsPage() {
             <li key={project.id}>
               <Card className="flex h-full flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <Link to={`/projects/${project.id}`} className="min-w-0 text-base font-semibold text-slate-900 hover:text-indigo-600">
+                  <Link to={`/projects/${project.id}`} className="min-w-0 text-base font-semibold text-slate-900 hover:text-brand-600">
                     <span className="line-clamp-2">{project.name}</span>
                   </Link>
                   {project.team_name && (
@@ -149,7 +149,7 @@ export function ProjectsPage() {
                   <div className="ml-auto flex gap-1">
                     <Link
                       to={`/projects/${project.id}`}
-                      className="rounded-md px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
+                      className="rounded-md px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
                     >
                       Open board
                     </Link>

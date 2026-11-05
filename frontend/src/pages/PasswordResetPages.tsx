@@ -7,7 +7,7 @@ import { Alert, Button, Field, Input } from "../components/ui";
 import { AuthLayout } from "./AuthLayout";
 
 const backToLogin = (
-  <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+  <Link to="/login" className="font-medium text-brand-600 hover:text-brand-500">
     Back to log in
   </Link>
 );
@@ -101,7 +101,7 @@ export function ResetPasswordPage() {
           <Alert kind="success">{done}</Alert>
           <Link
             to="/login"
-            className="block w-full rounded-md bg-indigo-600 px-3.5 py-2 text-center text-sm font-medium text-white hover:bg-indigo-500"
+            className="block w-full rounded-md bg-brand-600 px-3.5 py-2 text-center text-sm font-medium text-white hover:bg-brand-500"
           >
             Log in
           </Link>

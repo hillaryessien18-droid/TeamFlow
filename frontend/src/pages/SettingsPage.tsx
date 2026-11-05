@@ -23,7 +23,7 @@ export function SettingsPage() {
       <div className="max-w-2xl space-y-6">
         <Card className="p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">General</h2>
+            <h2 className="font-display text-base font-bold text-brand-600">General</h2>
             {current.my_role && <RoleBadge role={current.my_role} />}
           </div>
           {saved && (

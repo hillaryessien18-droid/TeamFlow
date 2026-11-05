@@ -35,7 +35,7 @@ export function LoginPage() {
       subtitle={
         <>
           New here?{" "}
-          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <Link to="/register" className="font-medium text-brand-600 hover:text-brand-500">
             Create an account
           </Link>
         </>
@@ -57,7 +57,7 @@ export function LoginPage() {
           />
         </Field>
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+          <Link to="/forgot-password" className="text-sm font-medium text-brand-600 hover:text-brand-500">
             Forgot password?
           </Link>
         </div>

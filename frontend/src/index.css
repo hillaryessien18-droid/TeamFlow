@@ -2,8 +2,34 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Navy brand scale; 600 is the primary color. */
+  --color-brand-50: #f2f6fa;
+  --color-brand-100: #e1eaf3;
+  --color-brand-200: #c5d6e8;
+  --color-brand-300: #9bb8d6;
+  --color-brand-400: #6b93bf;
+  --color-brand-500: #2f5a88;
+  --color-brand-600: #1b3a5c;
+  --color-brand-700: #16304d;
+  --color-brand-800: #12273f;
+  --color-brand-900: #0e1f33;
+  --color-brand-950: #091524;
+
+  --color-canvas: #f4f7fb;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-slate-50 text-slate-800 antialiased;
+  @apply bg-canvas font-sans text-slate-800 antialiased;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-display;
 }

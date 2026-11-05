@@ -22,7 +22,7 @@ export function ActivityFeed({ items, showProject = true }: { items: Activity[];
               {showProject && item.project && item.project_name && (
                 <>
                   {" · "}
-                  <Link to={`/projects/${item.project}`} className="hover:text-indigo-600 hover:underline">
+                  <Link to={`/projects/${item.project}`} className="hover:text-brand-600 hover:underline">
                     {item.project_name}
                   </Link>
                 </>

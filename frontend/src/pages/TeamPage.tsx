@@ -82,7 +82,7 @@ export function TeamPage() {
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="text-sm font-semibold text-slate-900">Members ({members.data?.length ?? "…"})</h2>
+              <h2 className="font-display text-base font-bold text-brand-600">Members ({members.data?.length ?? "…"})</h2>
             </div>
             {members.loading ? (
               <PageLoader />
@@ -138,7 +138,7 @@ export function TeamPage() {
 
           <Card>
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-              <h2 className="text-sm font-semibold text-slate-900">Teams</h2>
+              <h2 className="font-display text-base font-bold text-brand-600">Teams</h2>
               {canManage && (
                 <Button size="sm" onClick={() => setTeamForm("new")}>
                   <PlusIcon className="size-4" /> New team
@@ -189,7 +189,7 @@ export function TeamPage() {
         <div className="space-y-6">
           {canManage ? (
             <Card className="p-5">
-              <h2 className="text-sm font-semibold text-slate-900">Add a member</h2>
+              <h2 className="font-display text-base font-bold text-brand-600">Add a member</h2>
               <p className="mt-1 text-xs text-slate-500">They need a TeamFlow account with this email.</p>
               <form onSubmit={invite} className="mt-4 space-y-3">
                 <Field label="Email" htmlFor="invite-email">
@@ -211,7 +211,7 @@ export function TeamPage() {
             </Card>
           ) : null}
           <Card className="p-5">
-            <h2 className="text-sm font-semibold text-slate-900">Roles</h2>
+            <h2 className="font-display text-base font-bold text-brand-600">Roles</h2>
             <dl className="mt-3 space-y-3 text-sm">
               <div>
                 <dt><RoleBadge role="owner" /></dt>
@@ -340,7 +340,7 @@ function TeamForm({ onClose, organizationId, team, members, onSaved }: TeamFormP
               <label className="flex cursor-pointer items-center gap-3 rounded px-2 py-1.5 hover:bg-slate-50">
                 <input
                   type="checkbox"
-                  className="size-4 rounded border-slate-300 text-indigo-600"
+                  className="size-4 rounded border-slate-300 text-brand-600"
                   checked={selected.has(m.user.id)}
                   onChange={() => toggle(m.user.id)}
                 />

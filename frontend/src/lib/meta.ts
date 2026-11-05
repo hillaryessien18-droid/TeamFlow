@@ -18,7 +18,7 @@ export const PRIORITY_META: Record<Priority, { label: string; badge: string }> =
 };
 
 export const ROLE_META: Record<Role, { label: string; badge: string }> = {
-  owner: { label: "Owner", badge: "bg-indigo-50 text-indigo-700 ring-indigo-600/20" },
+  owner: { label: "Owner", badge: "bg-brand-50 text-brand-700 ring-brand-600/20" },
   admin: { label: "Admin", badge: "bg-violet-50 text-violet-700 ring-violet-600/20" },
   member: { label: "Member", badge: "bg-slate-50 text-slate-600 ring-slate-500/20" },
 };

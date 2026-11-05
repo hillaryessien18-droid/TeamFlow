@@ -59,7 +59,7 @@ export function ProfilePage() {
       <PageHeader title="Your profile" description={user?.email} />
       <div className="max-w-2xl space-y-6">
         <Card className="p-5">
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">Profile</h2>
+          <h2 className="mb-4 font-display text-base font-bold text-brand-600">Profile</h2>
           <form onSubmit={saveProfile} className="space-y-4">
             {profileNotice && <Alert kind={profileNotice.kind}>{profileNotice.text}</Alert>}
             <Field label="Email" htmlFor="profile-email" hint="Your email is your login and can't be changed.">
@@ -77,7 +77,7 @@ export function ProfilePage() {
         </Card>
 
         <Card className="p-5">
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">Change password</h2>
+          <h2 className="mb-4 font-display text-base font-bold text-brand-600">Change password</h2>
           <form onSubmit={changePassword} className="space-y-4">
             {passwordNotice && <Alert kind={passwordNotice.kind}>{passwordNotice.text}</Alert>}
             <Field label="Current password" htmlFor="current-password">

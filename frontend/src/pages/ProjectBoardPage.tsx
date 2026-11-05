@@ -101,7 +101,7 @@ export function ProjectBoardPage() {
     return (
       <div className="space-y-4">
         <Alert>{project.error ?? "Project not found."}</Alert>
-        <Link to="/projects" className="text-sm font-medium text-indigo-600">
+        <Link to="/projects" className="text-sm font-medium text-brand-600">
           ← Back to projects
         </Link>
       </div>
@@ -230,7 +230,7 @@ export function ProjectBoardPage() {
         )}
         {showActivity && (
           <Card className="h-fit p-4">
-            <h2 className="text-sm font-semibold text-slate-900">Project activity</h2>
+            <h2 className="font-display text-base font-bold text-brand-600">Project activity</h2>
             <ProjectActivity projectId={p.id} version={tasks.data} />
           </Card>
         )}
