@@ -1,0 +1,35 @@
+# Render Blueprint: Django API + managed PostgreSQL.
+# The React frontend deploys separately on Vercel (see README).
+databases:
+  - name: teamflow-db
+    plan: free
+    databaseName: teamflow
+    user: teamflow
+
+services:
+  - type: web
+    name: teamflow-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn teamflow.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teamflow-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      # Set these to your Vercel URL after the first frontend deploy:
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
