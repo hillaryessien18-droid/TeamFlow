@@ -14,7 +14,7 @@ interface Props {
   onChange?: () => void;
 }
 
-export function CommentsPanel({ taskId, readOnly, canModerate, onChange }: Props) {
+export function CommentsPanel({ taskId, readOnly, canModerate, onChange }: Readonly<Props>) {
   const { user } = useAuth();
   const comments = useLoader(() => commentApi.list(taskId), [taskId]);
   const [body, setBody] = useState("");
@@ -108,7 +108,7 @@ export function CommentsPanel({ taskId, readOnly, canModerate, onChange }: Props
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-700">{comment.body}</p>
+                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm text-slate-700">{comment.body}</p>
                 )}
               </div>
             </li>

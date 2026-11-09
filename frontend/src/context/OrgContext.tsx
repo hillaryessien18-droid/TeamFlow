@@ -28,7 +28,7 @@ function storedOrgId(): number | null {
   }
 }
 
-export function OrgProvider({ children }: { children: ReactNode }) {
+export function OrgProvider({ children }: Readonly<{ children: ReactNode }>) {
   const { user } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentId, setCurrentId] = useState<number | null>(storedOrgId);

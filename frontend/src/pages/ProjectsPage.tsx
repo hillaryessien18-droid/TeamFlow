@@ -12,6 +12,88 @@ import { useOrg } from "../context/OrgContext";
 import { formatDate } from "../lib/format";
 import { useLoader } from "../lib/useLoader";
 
+function emptyStateCopy(query: string, status: ProjectStatus, canManage: boolean) {
+  if (query) return { title: "No matching projects", description: "Try a different search." };
+  if (status === "archived") {
+    return {
+      title: "No archived projects",
+      description: "Archived projects appear here. They are read-only until restored.",
+    };
+  }
+  return {
+    title: "No active projects",
+    description: canManage
+      ? "Create your first project to start planning work on a Kanban board."
+      : "An admin or owner can create projects for this organization.",
+  };
+}
+
+interface ProjectCardProps {
+  project: Project;
+  canManage: boolean;
+  onEdit: () => void;
+  onToggleArchive: () => void;
+  onDelete: () => void;
+}
+
+function ProjectCard({ project, canManage, onEdit, onToggleArchive, onDelete }: Readonly<ProjectCardProps>) {
+  const active = project.status === "active";
+  return (
+    <Card className="flex h-full flex-col p-5">
+      <div className="flex items-start justify-between gap-3">
+        <Link to={`/projects/${project.id}`} className="min-w-0 text-base font-semibold text-slate-900 hover:text-brand-600">
+          <span className="line-clamp-2">{project.name}</span>
+        </Link>
+        {project.team_name && (
+          <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+            {project.team_name}
+          </span>
+        )}
+      </div>
+      <p className="mt-1 line-clamp-2 min-h-10 text-sm text-slate-500">{project.description || "No description."}</p>
+      <div className="mt-4">
+        <div className="mb-1.5 flex justify-between text-xs text-slate-500">
+          <span>
+            {project.completed_count} of {project.task_count} tasks done
+          </span>
+          <span className="font-medium tabular-nums text-slate-700">{project.progress}%</span>
+        </div>
+        <ProgressBar value={project.progress} label={`${project.name} progress`} />
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+        {project.due_date && (
+          <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+            <CalendarIcon className="size-3.5" /> {formatDate(project.due_date)}
+          </span>
+        )}
+        <div className="ml-auto flex gap-1">
+          <Link
+            to={`/projects/${project.id}`}
+            className="rounded-md px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
+          >
+            Open board
+          </Link>
+          {canManage && (
+            <>
+              {active && (
+                <Button size="sm" variant="ghost" onClick={onEdit}>
+                  Edit
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={onToggleArchive}>
+                {active ? "Archive" : "Restore"}
+              </Button>
+              <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={onDelete}>
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export function ProjectsPage() {
   const { current, canManage } = useOrg();
   const [status, setStatus] = useState<ProjectStatus>("active");
@@ -44,6 +126,41 @@ export function ProjectsPage() {
   }
 
   if (!current) return null;
+
+  function renderProjects() {
+    if (projects.loading) return <PageLoader />;
+    if (projects.data?.length === 0) {
+      const copy = emptyStateCopy(query, status, canManage);
+      return (
+        <EmptyState
+          title={copy.title}
+          description={copy.description}
+          action={
+            canManage && status === "active" && !query && (
+              <Button onClick={() => setCreating(true)}>
+                <PlusIcon className="size-4" /> New project
+              </Button>
+            )
+          }
+        />
+      );
+    }
+    return (
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {projects.data?.map((project) => (
+          <li key={project.id}>
+            <ProjectCard
+              project={project}
+              canManage={canManage}
+              onEdit={() => setEditing(project)}
+              onToggleArchive={() => void toggleArchive(project)}
+              onDelete={() => setDeleting(project)}
+            />
+          </li>
+        ))}
+      </ul>
+    );
+  }
 
   return (
     <>
@@ -93,88 +210,7 @@ export function ProjectsPage() {
         </div>
       )}
 
-      {projects.loading ? (
-        <PageLoader />
-      ) : projects.data?.length === 0 ? (
-        <EmptyState
-          title={query ? "No matching projects" : status === "active" ? "No active projects" : "No archived projects"}
-          description={
-            query
-              ? "Try a different search."
-              : status === "active"
-                ? canManage
-                  ? "Create your first project to start planning work on a Kanban board."
-                  : "An admin or owner can create projects for this organization."
-                : "Archived projects appear here. They are read-only until restored."
-          }
-          action={
-            canManage && status === "active" && !query && (
-              <Button onClick={() => setCreating(true)}>
-                <PlusIcon className="size-4" /> New project
-              </Button>
-            )
-          }
-        />
-      ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {projects.data?.map((project) => (
-            <li key={project.id}>
-              <Card className="flex h-full flex-col p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <Link to={`/projects/${project.id}`} className="min-w-0 text-base font-semibold text-slate-900 hover:text-brand-600">
-                    <span className="line-clamp-2">{project.name}</span>
-                  </Link>
-                  {project.team_name && (
-                    <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                      {project.team_name}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 line-clamp-2 min-h-10 text-sm text-slate-500">{project.description || "No description."}</p>
-                <div className="mt-4">
-                  <div className="mb-1.5 flex justify-between text-xs text-slate-500">
-                    <span>
-                      {project.completed_count} of {project.task_count} tasks done
-                    </span>
-                    <span className="font-medium tabular-nums text-slate-700">{project.progress}%</span>
-                  </div>
-                  <ProgressBar value={project.progress} label={`${project.name} progress`} />
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
-                  {project.due_date && (
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                      <CalendarIcon className="size-3.5" /> {formatDate(project.due_date)}
-                    </span>
-                  )}
-                  <div className="ml-auto flex gap-1">
-                    <Link
-                      to={`/projects/${project.id}`}
-                      className="rounded-md px-2.5 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50"
-                    >
-                      Open board
-                    </Link>
-                    {canManage && (
-                      <>
-                        {project.status === "active" && (
-                          <Button size="sm" variant="ghost" onClick={() => setEditing(project)}>
-                            Edit
-                          </Button>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => void toggleArchive(project)}>
-                          {project.status === "active" ? "Archive" : "Restore"}
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setDeleting(project)}>
-                          Delete
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
+      {renderProjects()}
 
       <ProjectFormModal
         open={creating || editing !== null}

@@ -15,15 +15,15 @@ interface Props {
   onSaved: (project: Project) => void;
 }
 
-export function ProjectFormModal(props: Props) {
+export function ProjectFormModal({ open, ...props }: Readonly<Props>) {
   return (
-    <Modal open={props.open} onClose={props.onClose} title={props.project ? "Edit project" : "New project"}>
+    <Modal open={open} onClose={props.onClose} title={props.project ? "Edit project" : "New project"}>
       <ProjectForm key={props.project?.id ?? "new"} {...props} />
     </Modal>
   );
 }
 
-function ProjectForm({ onClose, organizationId, project, onSaved }: Props) {
+function ProjectForm({ onClose, organizationId, project, onSaved }: Readonly<Omit<Props, "open">>) {
   const teams = useLoader(() => teamApi.list(organizationId), [organizationId]);
   const [name, setName] = useState(project?.name ?? "");
   const [description, setDescription] = useState(project?.description ?? "");

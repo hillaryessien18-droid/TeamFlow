@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 // Node 25+ defines its own global `localStorage`, which shadows jsdom's and is unusable
 // without --localstorage-file. Give tests a predictable in-memory Storage instead.
 class MemoryStorage implements Storage {
-  private items = new Map<string, string>();
+  private readonly items = new Map<string, string>();
   get length() {
     return this.items.size;
   }

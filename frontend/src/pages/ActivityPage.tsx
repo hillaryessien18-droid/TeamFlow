@@ -17,6 +17,18 @@ export function ActivityPage() {
 
   if (!current) return null;
 
+  function renderActivity() {
+    if (activity.loading) return <PageLoader />;
+    if (activity.error) {
+      return (
+        <div className="py-3">
+          <Alert>{activity.error}</Alert>
+        </div>
+      );
+    }
+    return <ActivityFeed items={activity.data ?? []} showProject={!projectId} />;
+  }
+
   return (
     <>
       <PageHeader
@@ -35,15 +47,7 @@ export function ActivityPage() {
         }
       />
       <Card className="px-5 py-2">
-        {activity.loading ? (
-          <PageLoader />
-        ) : activity.error ? (
-          <div className="py-3">
-            <Alert>{activity.error}</Alert>
-          </div>
-        ) : (
-          <ActivityFeed items={activity.data ?? []} showProject={!projectId} />
-        )}
+        {renderActivity()}
       </Card>
     </>
   );

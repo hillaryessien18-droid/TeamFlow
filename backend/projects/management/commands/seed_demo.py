@@ -14,7 +14,7 @@ from organizations.models import Membership, Organization, Team
 from projects.activity import log_activity
 from projects.models import Comment, Project, Task
 
-DEMO_PASSWORD = "TeamFlow-demo-2026"
+DEMO_PASSWORD = "TeamFlow-demo-2026"  # NOSONAR - public demo credential, documented in README
 DEMO_ORG = "Acme Studio"
 USERS = [
     ("owner@demo.teamflow.dev", "Olivia Owner", Membership.Role.OWNER),

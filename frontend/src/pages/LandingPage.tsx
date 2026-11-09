@@ -13,7 +13,7 @@ const NAV = [
   { href: "#dashboard", label: "Dashboard" },
 ];
 
-function Eyebrow({ children, light = false }: { children: ReactNode; light?: boolean }) {
+function Eyebrow({ children, light = false }: Readonly<{ children: ReactNode; light?: boolean }>) {
   return (
     <p className={cn("text-xs font-bold uppercase tracking-[0.18em]", light ? "text-emerald-300" : "text-emerald-600")}>
       {children}
@@ -21,7 +21,7 @@ function Eyebrow({ children, light = false }: { children: ReactNode; light?: boo
   );
 }
 
-function Check({ children }: { children: ReactNode }) {
+function Check({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <li className="flex gap-3">
       <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -34,17 +34,17 @@ function Check({ children }: { children: ReactNode }) {
 
 /* ---------- Product mockups (pure HTML, no screenshots needed) ---------- */
 
-function MiniCard({ title, badge, badgeClass, person, done = false }: {
+function MiniCard({ title, badge, badgeClass, person, done = false }: Readonly<{
   title: string;
   badge: string;
   badgeClass: string;
   person: string;
   done?: boolean;
-}) {
+}>) {
   return (
     <div className="rounded-lg bg-white p-2 shadow-sm ring-1 ring-slate-200 sm:p-2.5">
       <div className="flex items-start justify-between gap-2">
-        <p className={cn("min-w-0 break-words text-[11px] font-semibold leading-snug text-slate-800", done && "text-slate-400 line-through")}>{title}</p>
+        <p className={cn("min-w-0 wrap-break-word text-[11px] font-semibold leading-snug text-slate-800", done && "text-slate-400 line-through")}>{title}</p>
         <span className={cn("hidden shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold sm:inline", badgeClass)}>{badge}</span>
       </div>
       <div className="mt-2 flex items-center justify-between">
@@ -244,13 +244,13 @@ const ROLES = [
   },
 ];
 
-function FeatureBlock({ eyebrow, title, points, mockup, reverse = false }: {
+function FeatureBlock({ eyebrow, title, points, mockup, reverse = false }: Readonly<{
   eyebrow: string;
   title: string;
   points: string[];
   mockup: ReactNode;
   reverse?: boolean;
-}) {
+}>) {
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       <div className={cn(reverse && "lg:order-2")}>
@@ -324,7 +324,7 @@ export function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 to-white">
+        <section className="relative overflow-hidden bg-linear-to-b from-brand-50 to-white">
           <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
             <div>
               <Eyebrow>Project management for teams</Eyebrow>
@@ -353,7 +353,7 @@ export function LandingPage() {
               <p className="mt-4 text-sm text-slate-500">Free to use · Unlimited projects · Open source</p>
             </div>
             <div className="relative min-w-0">
-              <div className="absolute -inset-6 -z-0 rounded-[2rem] bg-brand-200/40 blur-2xl" aria-hidden="true" />
+              <div className="absolute -inset-6 z-0 rounded-4xl bg-brand-200/40 blur-2xl" aria-hidden="true" />
               <div className="relative">
                 <BoardMockup />
               </div>

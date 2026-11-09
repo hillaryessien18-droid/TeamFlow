@@ -4,7 +4,7 @@ import type { Activity } from "../api/types";
 import { relativeTime } from "../lib/format";
 import { Avatar } from "./ui";
 
-export function ActivityFeed({ items, showProject = true }: { items: Activity[]; showProject?: boolean }) {
+export function ActivityFeed({ items, showProject = true }: Readonly<{ items: Activity[]; showProject?: boolean }>) {
   if (!items.length) return <p className="py-6 text-center text-sm text-slate-500">No activity yet.</p>;
   return (
     <ul className="divide-y divide-slate-100">

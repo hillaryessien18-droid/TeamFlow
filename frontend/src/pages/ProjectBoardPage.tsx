@@ -251,7 +251,7 @@ export function ProjectBoardPage() {
         onSaved={upsertTask}
         onDeleted={(id) => {
           setOpenTask(null);
-          tasks.setData((prev) => prev && prev.filter((t) => t.id !== id));
+          tasks.setData((prev) => prev?.filter((t) => t.id !== id) ?? null);
           refreshProgress();
         }}
         onCommentsChanged={() => void tasks.reload(true)}
@@ -268,7 +268,7 @@ export function ProjectBoardPage() {
 }
 
 /** `version` changes whenever the board data changes, so the feed quietly refreshes after edits. */
-function ProjectActivity({ projectId, version }: { projectId: number; version: unknown }) {
+function ProjectActivity({ projectId, version }: Readonly<{ projectId: number; version: unknown }>) {
   const activity = useLoader(() => activityApi.list({ project: projectId, limit: 30 }), [projectId]);
   const mounted = useRef(false);
   useEffect(() => {

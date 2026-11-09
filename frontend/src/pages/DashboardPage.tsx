@@ -16,13 +16,13 @@ function Stat({
   hint,
   icon,
   tone,
-}: {
+}: Readonly<{
   label: string;
   value: string | number;
   hint?: string;
   icon: string;
   tone?: "danger";
-}) {
+}>) {
   return (
     <Card className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
@@ -39,7 +39,7 @@ function Stat({
   );
 }
 
-function StatusBreakdown({ tasks }: { tasks: Dashboard["tasks"] }) {
+function StatusBreakdown({ tasks }: Readonly<{ tasks: Dashboard["tasks"] }>) {
   return (
     <div>
       <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100" aria-hidden="true">

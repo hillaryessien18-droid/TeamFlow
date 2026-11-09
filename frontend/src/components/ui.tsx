@@ -37,7 +37,7 @@ export function Button({
   disabled,
   type = "button",
   ...props
-}: ButtonProps) {
+}: Readonly<ButtonProps>) {
   return (
     <button
       type={type}
@@ -61,12 +61,12 @@ export function Field({
   htmlFor,
   hint,
   children,
-}: {
+}: Readonly<{
   label: string;
   htmlFor: string;
   hint?: string;
   children: ReactNode;
-}) {
+}>) {
   return (
     <div className="space-y-1.5">
       <label htmlFor={htmlFor} className="block text-sm font-medium text-slate-700">
@@ -101,20 +101,24 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
   return <select ref={ref} className={cn(CONTROL, "pr-8", className)} {...props} />;
 });
 
-export function Alert({ kind = "error", children }: { kind?: "error" | "success" | "info"; children: ReactNode }) {
+export function Alert({ kind = "error", children }: Readonly<{ kind?: "error" | "success" | "info"; children: ReactNode }>) {
   const styles = {
     error: "bg-red-50 text-red-800 ring-red-200",
     success: "bg-emerald-50 text-emerald-800 ring-emerald-200",
     info: "bg-sky-50 text-sky-800 ring-sky-200",
   };
-  return (
-    <div role={kind === "error" ? "alert" : "status"} className={cn("rounded-md px-3 py-2 text-sm ring-1", styles[kind])}>
-      {children}
-    </div>
-  );
+  const className = cn("rounded-md px-3 py-2 text-sm ring-1", styles[kind]);
+  if (kind === "error") {
+    return (
+      <div role="alert" className={className}>
+        {children}
+      </div>
+    );
+  }
+  return <output className={cn("block", className)}>{children}</output>;
 }
 
-export function Spinner({ className = "size-5" }: { className?: string }) {
+export function Spinner({ className = "size-5" }: Readonly<{ className?: string }>) {
   return (
     <svg className={cn("animate-spin", className)} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
@@ -123,11 +127,11 @@ export function Spinner({ className = "size-5" }: { className?: string }) {
   );
 }
 
-export function PageLoader({ label = "Loading…" }: { label?: string }) {
+export function PageLoader({ label = "Loading…" }: Readonly<{ label?: string }>) {
   return (
-    <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500" role="status">
+    <output className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
       <Spinner /> {label}
-    </div>
+    </output>
   );
 }
 
@@ -140,7 +144,7 @@ const AVATAR_COLORS = [
   "bg-violet-100 text-violet-700",
 ];
 
-export function Avatar({ user, size = "md" }: { user: Pick<User, "id" | "full_name"> | null; size?: "sm" | "md" }) {
+export function Avatar({ user, size = "md" }: Readonly<{ user: Pick<User, "id" | "full_name"> | null; size?: "sm" | "md" }>) {
   const dims = size === "sm" ? "size-6 text-[10px]" : "size-8 text-xs";
   if (!user) {
     return (
@@ -163,7 +167,7 @@ export function Avatar({ user, size = "md" }: { user: Pick<User, "id" | "full_na
   );
 }
 
-function Pill({ className, children }: { className: string; children: ReactNode }) {
+function Pill({ className, children }: Readonly<{ className: string; children: ReactNode }>) {
   return (
     <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset", className)}>
       {children}
@@ -171,34 +175,33 @@ function Pill({ className, children }: { className: string; children: ReactNode 
   );
 }
 
-export function PriorityBadge({ priority }: { priority: Priority }) {
+export function PriorityBadge({ priority }: Readonly<{ priority: Priority }>) {
   return <Pill className={PRIORITY_META[priority].badge}>{PRIORITY_META[priority].label}</Pill>;
 }
 
-export function RoleBadge({ role }: { role: Role }) {
+export function RoleBadge({ role }: Readonly<{ role: Role }>) {
   return <Pill className={ROLE_META[role].badge}>{ROLE_META[role].label}</Pill>;
 }
 
-export function ProgressBar({ value, label }: { value: number; label: string }) {
+export function ProgressBar({ value, label }: Readonly<{ value: number; label: string }>) {
   const clamped = Math.max(0, Math.min(100, value));
   return (
-    <div
-      role="progressbar"
+    <progress
       aria-label={label}
-      aria-valuenow={clamped}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      className="h-2 w-full overflow-hidden rounded-full bg-slate-100"
-    >
-      <div
-        className={cn("h-full rounded-full transition-all", clamped === 100 ? "bg-emerald-500" : "bg-brand-500")}
-        style={{ width: `${clamped}%` }}
-      />
-    </div>
+      value={clamped}
+      max={100}
+      className={cn(
+        "block h-2 w-full appearance-none overflow-hidden rounded-full border-0 bg-slate-100",
+        "[&::-webkit-progress-bar]:bg-slate-100 [&::-webkit-progress-value]:rounded-full [&::-moz-progress-bar]:rounded-full",
+        clamped === 100
+          ? "[&::-webkit-progress-value]:bg-emerald-500 [&::-moz-progress-bar]:bg-emerald-500"
+          : "[&::-webkit-progress-value]:bg-brand-500 [&::-moz-progress-bar]:bg-brand-500",
+      )}
+    />
   );
 }
 
-export function Card({ className, children }: { className?: string; children: ReactNode }) {
+export function Card({ className, children }: Readonly<{ className?: string; children: ReactNode }>) {
   return <div className={cn("rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80", className)}>{children}</div>;
 }
 
@@ -206,11 +209,11 @@ export function EmptyState({
   title,
   description,
   action,
-}: {
+}: Readonly<{
   title: string;
   description?: string;
   action?: ReactNode;
-}) {
+}>) {
   return (
     <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white/50 px-6 py-12 text-center">
       <h3 className="text-base font-bold text-brand-600">{title}</h3>
@@ -224,11 +227,11 @@ export function PageHeader({
   title,
   description,
   actions,
-}: {
+}: Readonly<{
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
-}) {
+}>) {
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">

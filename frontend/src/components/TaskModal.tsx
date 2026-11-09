@@ -27,8 +27,8 @@ interface Props {
   onCommentsChanged?: () => void;
 }
 
-export function TaskModal(props: Props) {
-  const { open, onClose, task } = props;
+export function TaskModal({ open, ...props }: Readonly<Props>) {
+  const { onClose, task } = props;
   return (
     <Modal open={open} onClose={onClose} title={task ? "Task details" : "New task"} size={task ? "lg" : "md"}>
       {/* Re-mount per task so the form always starts from that task's values. */}
@@ -48,7 +48,7 @@ function TaskModalBody({
   onSaved,
   onDeleted,
   onCommentsChanged,
-}: Props) {
+}: Readonly<Omit<Props, "open">>) {
   const { user } = useAuth();
   const [title, setTitle] = useState(task?.title ?? "");
   const [description, setDescription] = useState(task?.description ?? "");
@@ -216,7 +216,7 @@ function TaskModalBody({
   );
 }
 
-function TaskHistory({ taskId, updatedAt }: { taskId: number; updatedAt: string }) {
+function TaskHistory({ taskId, updatedAt }: Readonly<{ taskId: number; updatedAt: string }>) {
   // updatedAt changes whenever the task is saved, which adds new history entries.
   const history = useLoader(() => activityApi.list({ task: taskId, limit: 100 }), [taskId, updatedAt]);
   if (history.loading) return <PageLoader label="Loading history…" />;

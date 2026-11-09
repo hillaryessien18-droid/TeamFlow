@@ -62,7 +62,7 @@ export function OrgFormFields({ onSaved, organization, onCancel }: Omit<Props, "
   );
 }
 
-export function OrgFormModal({ open, onClose, organization, onSaved }: Props) {
+export function OrgFormModal({ open, onClose, organization, onSaved }: Readonly<Props>) {
   const [key, setKey] = useState(0);
   useEffect(() => {
     if (open) setKey((k) => k + 1);

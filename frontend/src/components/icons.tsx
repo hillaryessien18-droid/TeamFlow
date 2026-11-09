@@ -2,7 +2,7 @@ import type { SVGProps } from "react";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
-function Icon({ children, className = "size-5", ...props }: IconProps) {
+function Icon({ children, className = "size-5", ...props }: Readonly<IconProps>) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -81,7 +81,7 @@ export const UserIcon = (p: IconProps) => (
   </Icon>
 );
 
-export function Logo({ className = "", tone = "dark" }: { className?: string; tone?: "dark" | "light" }) {
+export function Logo({ className = "", tone = "dark" }: Readonly<{ className?: string; tone?: "dark" | "light" }>) {
   const light = tone === "light";
   return (
     <span

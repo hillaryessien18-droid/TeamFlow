@@ -32,34 +32,41 @@ export function Modal({ open, onClose, title, children, size = "md" }: ModalProp
   if (!open) return null;
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 sm:p-8"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className={cn("w-full rounded-xl bg-white shadow-xl", size === "lg" ? "max-w-3xl" : "max-w-lg")}
-      >
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <h2 id={titleId} className="text-base font-semibold text-slate-900">
-            {title}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-          >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="size-5" aria-hidden="true">
-              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-            </svg>
-          </button>
-        </div>
-        <div className="px-5 py-4">{children}</div>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="relative flex min-h-full items-start justify-center p-4 sm:p-8">
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label="Close dialog"
+          className="absolute inset-0 cursor-default bg-slate-900/40"
+          onClick={onClose}
+        />
+        <dialog
+          open
+          aria-modal="true"
+          aria-labelledby={titleId}
+          className={cn(
+            "relative m-0 w-full rounded-xl border-0 bg-white p-0 text-inherit shadow-xl",
+            size === "lg" ? "max-w-3xl" : "max-w-lg",
+          )}
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+            <h2 id={titleId} className="text-base font-semibold text-slate-900">
+              {title}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            >
+              <svg viewBox="0 0 20 20" fill="currentColor" className="size-5" aria-hidden="true">
+                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+              </svg>
+            </button>
+          </div>
+          <div className="px-5 py-4">{children}</div>
+        </dialog>
       </div>
     </div>,
     document.body,
@@ -75,7 +82,7 @@ interface ConfirmProps {
   confirmLabel?: string;
 }
 
-export function ConfirmDialog({ open, onClose, onConfirm, title, message, confirmLabel = "Delete" }: ConfirmProps) {
+export function ConfirmDialog({ open, onClose, onConfirm, title, message, confirmLabel = "Delete" }: Readonly<ConfirmProps>) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

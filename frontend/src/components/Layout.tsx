@@ -15,7 +15,7 @@ const NAV = [
   { to: "/settings", label: "Settings", icon: CogIcon, end: false },
 ];
 
-function Sidebar({ onCreateOrg }: { onCreateOrg: () => void }) {
+function Sidebar({ onCreateOrg }: Readonly<{ onCreateOrg: () => void }>) {
   const { user, logout } = useAuth();
   const { organizations, current, selectOrg } = useOrg();
   const navigate = useNavigate();
@@ -133,6 +133,12 @@ export function Layout() {
 
   useEffect(() => setMenuOpen(false), [location.pathname]);
 
+  function renderMain() {
+    if (loading) return <PageLoader />;
+    if (organizations.length === 0) return <Onboarding />;
+    return <Outlet />;
+  }
+
   return (
     <div className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
@@ -141,7 +147,13 @@ export function Layout() {
 
       {menuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/40" onClick={() => setMenuOpen(false)} />
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label="Close menu"
+            className="absolute inset-0 cursor-default bg-slate-900/40"
+            onClick={() => setMenuOpen(false)}
+          />
           <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] shadow-xl">
             <Sidebar onCreateOrg={() => setCreatingOrg(true)} />
           </aside>
@@ -161,7 +173,7 @@ export function Layout() {
           <Logo />
         </header>
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          {loading ? <PageLoader /> : organizations.length === 0 ? <Onboarding /> : <Outlet />}
+          {renderMain()}
         </main>
       </div>
 

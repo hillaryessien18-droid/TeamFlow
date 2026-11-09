@@ -68,6 +68,102 @@ export function TeamPage() {
 
   const ownerCount = members.data?.filter((m) => m.role === "owner").length ?? 0;
 
+  function renderTeams() {
+    if (teams.loading) return <PageLoader />;
+    if (teams.data?.length === 0) {
+      return (
+        <EmptyState
+          title="No teams yet"
+          description="Teams group members (e.g. Design, Engineering) and can be attached to projects."
+        />
+      );
+    }
+    return (
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {teams.data?.map((team) => (
+          <li key={team.id} className="rounded-lg p-4 ring-1 ring-slate-200">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-medium text-slate-900">{team.name}</h3>
+              {canManage && (
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" onClick={() => setTeamForm(team)}>
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => setDeletingTeam(team)}>
+                    Delete
+                  </Button>
+                </div>
+              )}
+            </div>
+            {team.description && <p className="mt-1 text-sm text-slate-500">{team.description}</p>}
+            <div className="mt-3 flex flex-wrap gap-1">
+              {team.members.length === 0 ? (
+                <span className="text-xs text-slate-400">No members</span>
+              ) : (
+                team.members.map((u) => <Avatar key={u.id} user={u} size="sm" />)
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  function renderMembers() {
+    if (members.loading) return <PageLoader />;
+    if (members.error) {
+      return (
+        <div className="p-5">
+          <Alert>{members.error}</Alert>
+        </div>
+      );
+    }
+    return (
+      <ul className="divide-y divide-slate-100">
+        {members.data?.map((m) => {
+          const isMe = m.user.id === user?.id;
+          const options = roleOptions(m);
+          const canEditRole = canManage && options.length > 0 && !(m.role === "owner" && ownerCount <= 1);
+          const canRemove = isMe ? !(m.role === "owner" && ownerCount <= 1) : canManage && (isOwner || m.role !== "owner");
+          return (
+            <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
+              <Avatar user={m.user} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-slate-900">
+                  {m.user.full_name} {isMe && <span className="text-slate-400">(you)</span>}
+                </p>
+                <p className="truncate text-xs text-slate-500">
+                  {m.user.email} · joined {formatDate(m.joined_at)}
+                </p>
+              </div>
+              {canEditRole ? (
+                <Select
+                  aria-label={`Role for ${m.user.full_name}`}
+                  value={m.role}
+                  onChange={(e) => void changeRole(m, e.target.value as Role)}
+                  className="w-28 py-1.5"
+                >
+                  {options.map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_META[r].label}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <RoleBadge role={m.role} />
+              )}
+              {canRemove && (
+                <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setRemoving(m)}>
+                  {isMe ? "Leave" : "Remove"}
+                </Button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
   return (
     <>
       <PageHeader title="Members & Teams" description={`People in ${current.name} and how they're grouped.`} />
@@ -84,56 +180,7 @@ export function TeamPage() {
             <div className="border-b border-slate-100 px-5 py-4">
               <h2 className="font-display text-base font-bold text-brand-600">Members ({members.data?.length ?? "…"})</h2>
             </div>
-            {members.loading ? (
-              <PageLoader />
-            ) : members.error ? (
-              <div className="p-5">
-                <Alert>{members.error}</Alert>
-              </div>
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {members.data?.map((m) => {
-                  const isMe = m.user.id === user?.id;
-                  const options = roleOptions(m);
-                  const canEditRole = canManage && options.length > 0 && !(m.role === "owner" && ownerCount <= 1);
-                  const canRemove = isMe ? !(m.role === "owner" && ownerCount <= 1) : canManage && (isOwner || m.role !== "owner");
-                  return (
-                    <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                      <Avatar user={m.user} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-900">
-                          {m.user.full_name} {isMe && <span className="text-slate-400">(you)</span>}
-                        </p>
-                        <p className="truncate text-xs text-slate-500">
-                          {m.user.email} · joined {formatDate(m.joined_at)}
-                        </p>
-                      </div>
-                      {canEditRole ? (
-                        <Select
-                          aria-label={`Role for ${m.user.full_name}`}
-                          value={m.role}
-                          onChange={(e) => void changeRole(m, e.target.value as Role)}
-                          className="w-28 py-1.5"
-                        >
-                          {options.map((r) => (
-                            <option key={r} value={r}>
-                              {ROLE_META[r].label}
-                            </option>
-                          ))}
-                        </Select>
-                      ) : (
-                        <RoleBadge role={m.role} />
-                      )}
-                      {canRemove && (
-                        <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setRemoving(m)}>
-                          {isMe ? "Leave" : "Remove"}
-                        </Button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+            {renderMembers()}
           </Card>
 
           <Card>
@@ -146,42 +193,7 @@ export function TeamPage() {
               )}
             </div>
             <div className="p-5">
-              {teams.loading ? (
-                <PageLoader />
-              ) : teams.data?.length === 0 ? (
-                <EmptyState
-                  title="No teams yet"
-                  description="Teams group members (e.g. Design, Engineering) and can be attached to projects."
-                />
-              ) : (
-                <ul className="grid gap-4 sm:grid-cols-2">
-                  {teams.data?.map((team) => (
-                    <li key={team.id} className="rounded-lg p-4 ring-1 ring-slate-200">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-medium text-slate-900">{team.name}</h3>
-                        {canManage && (
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => setTeamForm(team)}>
-                              Edit
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => setDeletingTeam(team)}>
-                              Delete
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      {team.description && <p className="mt-1 text-sm text-slate-500">{team.description}</p>}
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {team.members.length === 0 ? (
-                          <span className="text-xs text-slate-400">No members</span>
-                        ) : (
-                          team.members.map((u) => <Avatar key={u.id} user={u} size="sm" />)
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {renderTeams()}
             </div>
           </Card>
         </div>
@@ -282,15 +294,15 @@ interface TeamFormProps {
   onSaved: () => void;
 }
 
-function TeamFormModal(props: TeamFormProps) {
+function TeamFormModal({ open, ...props }: Readonly<TeamFormProps>) {
   return (
-    <Modal open={props.open} onClose={props.onClose} title={props.team ? "Edit team" : "New team"}>
+    <Modal open={open} onClose={props.onClose} title={props.team ? "Edit team" : "New team"}>
       <TeamForm key={props.team?.id ?? "new"} {...props} />
     </Modal>
   );
 }
 
-function TeamForm({ onClose, organizationId, team, members, onSaved }: TeamFormProps) {
+function TeamForm({ onClose, organizationId, team, members, onSaved }: Readonly<Omit<TeamFormProps, "open">>) {
   const [name, setName] = useState(team?.name ?? "");
   const [description, setDescription] = useState(team?.description ?? "");
   const [selected, setSelected] = useState<Set<number>>(() => new Set(team?.members.map((u) => u.id)));

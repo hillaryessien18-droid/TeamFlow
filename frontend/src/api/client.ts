@@ -1,6 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-const BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
+let BASE: string = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+while (BASE.endsWith("/")) BASE = BASE.slice(0, -1);
 export const API_URL = `${BASE}/api`;
 
 const ACCESS_KEY = "teamflow.access";
@@ -73,7 +74,7 @@ api.interceptors.response.use(
         onAuthFailure();
       }
     }
-    return Promise.reject(error);
+    throw error;
   },
 );
 

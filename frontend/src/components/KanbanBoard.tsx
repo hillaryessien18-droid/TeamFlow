@@ -21,7 +21,7 @@ interface DropTarget {
   beforeId: number | null;
 }
 
-export function KanbanBoard({ tasks, readOnly = false, onMove, onOpen, onAdd }: Props) {
+export function KanbanBoard({ tasks, readOnly = false, onMove, onOpen, onAdd }: Readonly<Props>) {
   const columns = useMemo(() => groupByStatus(tasks), [tasks]);
   const [dragId, setDragId] = useState<number | null>(null);
   const [target, setTarget] = useState<DropTarget | null>(null);
@@ -155,10 +155,12 @@ interface CardProps {
   onDragEnd: () => void;
 }
 
-function TaskCard({ task, draggable, dragging, onOpen, onDragStart, onDragEnd }: CardProps) {
+function TaskCard({ task, draggable, dragging, onOpen, onDragStart, onDragEnd }: Readonly<CardProps>) {
   return (
-    <article
-      role="button"
+    // A native <button> can't be dragged in Firefox (bugzilla.mozilla.org/show_bug.cgi?id=568313),
+    // so the card keeps role="button" with its own keyboard handling.
+    <article // NOSONAR
+      role="button" // NOSONAR
       tabIndex={0}
       draggable={draggable}
       aria-label={task.title}
