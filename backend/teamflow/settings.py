@@ -89,13 +89,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "teamflow.wsgi.application"
 
-# PostgreSQL in production via DATABASE_URL; SQLite fallback for quick local runs and tests.
-DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-    )
-}
+# PostgreSQL via POSTGRES_* variables (e.g. Neon) when POSTGRES_HOST is set, otherwise via
+# DATABASE_URL; SQLite fallback for quick local runs and tests.
+if os.environ.get("POSTGRES_HOST"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRES_DB", "postgres"),
+            "USER": os.environ.get("POSTGRES_USER", "postgres"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
+            "HOST": os.environ["POSTGRES_HOST"],
+            "PORT": os.environ.get("POSTGRES_PORT") or "5432",
+            "CONN_MAX_AGE": 600,
+            "OPTIONS": {"sslmode": os.environ.get("POSTGRES_SSLMODE", "prefer")},
+        }
+    }
+else:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+            conn_max_age=600,
+        )
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 

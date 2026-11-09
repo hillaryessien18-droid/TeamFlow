@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 
@@ -28,6 +29,7 @@ def health(_request):
 
 
 urlpatterns = [
+    path("", RedirectView.as_view(pattern_name="swagger-ui"), name="root"),
     path("admin/", admin.site.urls),
     path("api/health/", health, name="health"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
