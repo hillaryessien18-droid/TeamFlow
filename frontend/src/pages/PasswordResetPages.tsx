@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "../api/client";
 import { authApi } from "../api/endpoints";
-import { Alert, Button, Field, Input } from "../components/ui";
+import { Alert, Button, Field, Input, PasswordInput, PasswordMatch } from "../components/ui";
 import { AuthLayout } from "./AuthLayout";
 
 const backToLogin = (
@@ -110,9 +110,8 @@ export function ResetPasswordPage() {
         <form onSubmit={submit} className="space-y-4">
           {error && <Alert>{error}</Alert>}
           <Field label="New password" htmlFor="new-password">
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               autoComplete="new-password"
               required
               minLength={8}
@@ -121,14 +120,14 @@ export function ResetPasswordPage() {
             />
           </Field>
           <Field label="Confirm new password" htmlFor="confirm-password">
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               autoComplete="new-password"
               required
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />
+            <PasswordMatch password={password} confirm={confirm} />
           </Field>
           <Button type="submit" className="w-full" loading={busy}>
             Reset password

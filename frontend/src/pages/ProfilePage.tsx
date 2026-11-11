@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 
 import { errorMessage } from "../api/client";
 import { authApi } from "../api/endpoints";
-import { Alert, Button, Card, Field, Input, PageHeader } from "../components/ui";
+import { Alert, Button, Card, Field, Input, PageHeader, PasswordInput, PasswordMatch } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 
 type Notice = { kind: "error" | "success"; text: string } | null;
@@ -18,6 +18,21 @@ export function ProfilePage() {
   const [confirm, setConfirm] = useState("");
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordNotice, setPasswordNotice] = useState<Notice>(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailNotice, setEmailNotice] = useState<Notice>(null);
+
+  async function toggleEmails(enabled: boolean) {
+    setEmailBusy(true);
+    setEmailNotice(null);
+    try {
+      setUser(await authApi.updateMe({ email_notifications: enabled }));
+      setEmailNotice({ kind: "success", text: enabled ? "Email notifications are on." : "Email notifications are off." });
+    } catch (err) {
+      setEmailNotice({ kind: "error", text: errorMessage(err) });
+    } finally {
+      setEmailBusy(false);
+    }
+  }
 
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
@@ -77,13 +92,41 @@ export function ProfilePage() {
         </Card>
 
         <Card className="p-5">
+          <h2 className="mb-1 font-display text-base font-bold text-brand-600">Notifications</h2>
+          <p className="mb-4 text-sm text-slate-500">
+            You always get in-app notifications (the bell icon). Choose whether they're emailed to you too.
+          </p>
+          {emailNotice && (
+            <div className="mb-4">
+              <Alert kind={emailNotice.kind}>{emailNotice.text}</Alert>
+            </div>
+          )}
+          <label htmlFor="email-notifications" className="flex cursor-pointer items-start gap-3">
+            <input
+              id="email-notifications"
+              type="checkbox"
+              className="mt-0.5 size-4 rounded border-slate-300 text-brand-600 focus:ring-brand-600"
+              checked={user?.email_notifications ?? true}
+              disabled={emailBusy}
+              onChange={(e) => void toggleEmails(e.target.checked)}
+            />
+            <span className="text-sm">
+              <span className="block font-medium text-slate-900">Email me about activity</span>
+              <span className="block text-slate-500">
+                When I'm assigned a task, someone comments on my tasks, a task I created is completed, I'm added to an
+                organization, or a deadline is coming up.
+              </span>
+            </span>
+          </label>
+        </Card>
+
+        <Card className="p-5">
           <h2 className="mb-4 font-display text-base font-bold text-brand-600">Change password</h2>
           <form onSubmit={changePassword} className="space-y-4">
             {passwordNotice && <Alert kind={passwordNotice.kind}>{passwordNotice.text}</Alert>}
             <Field label="Current password" htmlFor="current-password">
-              <Input
+              <PasswordInput
                 id="current-password"
-                type="password"
                 autoComplete="current-password"
                 required
                 value={currentPassword}
@@ -92,9 +135,8 @@ export function ProfilePage() {
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="New password" htmlFor="new-password">
-                <Input
+                <PasswordInput
                   id="new-password"
-                  type="password"
                   autoComplete="new-password"
                   required
                   minLength={8}
@@ -103,14 +145,14 @@ export function ProfilePage() {
                 />
               </Field>
               <Field label="Confirm new password" htmlFor="confirm-new-password">
-                <Input
+                <PasswordInput
                   id="confirm-new-password"
-                  type="password"
                   autoComplete="new-password"
                   required
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                 />
+                <PasswordMatch password={newPassword} confirm={confirm} />
               </Field>
             </div>
             <div className="flex justify-end">

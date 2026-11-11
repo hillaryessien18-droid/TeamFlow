@@ -2,13 +2,15 @@ import { useState, type FormEvent } from "react";
 
 import { errorMessage } from "../api/client";
 import { activityApi, taskApi } from "../api/endpoints";
-import type { Membership, Priority, Task, TaskStatus } from "../api/types";
+import type { Label, Membership, Priority, Task, TaskStatus } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { formatDate } from "../lib/format";
 import { PRIORITIES, PRIORITY_META, STATUSES, STATUS_META } from "../lib/meta";
 import { useLoader } from "../lib/useLoader";
 import { ActivityFeed } from "./ActivityFeed";
+import { AttachmentsPanel } from "./AttachmentsPanel";
 import { CommentsPanel } from "./CommentsPanel";
+import { LabelPicker } from "./LabelPicker";
 import { ConfirmDialog, Modal } from "./Modal";
 import { Alert, Button, cn, Field, Input, PageLoader, Select, Textarea } from "./ui";
 
@@ -20,6 +22,9 @@ interface Props {
   task?: Task | null;
   initialStatus?: TaskStatus;
   members: Membership[];
+  /** The organization's labels; the task's organization is taken from them or the members list. */
+  labels: Label[];
+  onLabelCreated: (label: Label) => void;
   readOnly: boolean;
   canManage: boolean;
   onSaved: (task: Task) => void;
@@ -43,6 +48,8 @@ function TaskModalBody({
   task,
   initialStatus = "todo",
   members,
+  labels,
+  onLabelCreated,
   readOnly,
   canManage,
   onSaved,
@@ -56,10 +63,12 @@ function TaskModalBody({
   const [priority, setPriority] = useState<Priority>(task?.priority ?? "medium");
   const [assignee, setAssignee] = useState<string>(task?.assignee ? String(task.assignee) : "");
   const [dueDate, setDueDate] = useState(task?.due_date ?? "");
+  const [labelIds, setLabelIds] = useState<number[]>(() => task?.labels.map((l) => l.id) ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [tab, setTab] = useState<"comments" | "activity">("comments");
+  const [tab, setTab] = useState<"comments" | "files" | "activity">("comments");
+  const organizationId = members[0]?.organization;
 
   const canDelete = !readOnly && task && (canManage || task.created_by?.id === user?.id);
 
@@ -74,6 +83,7 @@ function TaskModalBody({
       priority,
       assignee: assignee ? Number(assignee) : null,
       due_date: dueDate || null,
+      label_ids: labelIds,
     };
     try {
       const saved = task ? await taskApi.update(task.id, data) : await taskApi.create({ project: projectId, ...data });
@@ -143,6 +153,16 @@ function TaskModalBody({
           <Input id="task-due" type="date" value={dueDate} disabled={readOnly} onChange={(e) => setDueDate(e.target.value)} />
         </Field>
       </div>
+      {organizationId !== undefined && (
+        <LabelPicker
+          organizationId={organizationId}
+          labels={labels}
+          selected={labelIds}
+          disabled={readOnly}
+          onChange={setLabelIds}
+          onCreated={onLabelCreated}
+        />
+      )}
       {task && (
         <p className="text-xs text-slate-500">
           Created by {task.created_by?.full_name ?? "a former member"} on {formatDate(task.created_at)}
@@ -176,7 +196,7 @@ function TaskModalBody({
       {form}
       <div className="border-t border-slate-100 pt-4">
         <div role="tablist" className="mb-4 flex gap-4 border-b border-slate-100">
-          {(["comments", "activity"] as const).map((name) => (
+          {(["comments", "files", "activity"] as const).map((name) => (
             <button
               key={name}
               type="button"
@@ -188,15 +208,17 @@ function TaskModalBody({
                 tab === name ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700",
               )}
             >
-              {name === "comments" ? `Comments (${task.comment_count})` : "History"}
+              {TAB_LABELS[name](task)}
             </button>
           ))}
         </div>
-        {tab === "comments" ? (
+        {tab === "comments" && (
           <CommentsPanel taskId={task.id} readOnly={readOnly} canModerate={canManage} onChange={onCommentsChanged} />
-        ) : (
-          <TaskHistory taskId={task.id} updatedAt={task.updated_at} />
         )}
+        {tab === "files" && (
+          <AttachmentsPanel taskId={task.id} readOnly={readOnly} canModerate={canManage} onChange={onCommentsChanged} />
+        )}
+        {tab === "activity" && <TaskHistory taskId={task.id} updatedAt={task.updated_at} />}
       </div>
       <ConfirmDialog
         open={confirmDelete}
@@ -215,6 +237,12 @@ function TaskModalBody({
     </div>
   );
 }
+
+const TAB_LABELS: Record<"comments" | "files" | "activity", (task: Task) => string> = {
+  comments: (task) => `Comments (${task.comment_count})`,
+  files: (task) => `Files (${task.attachment_count})`,
+  activity: () => "History",
+};
 
 function TaskHistory({ taskId, updatedAt }: Readonly<{ taskId: number; updatedAt: string }>) {
   // updatedAt changes whenever the task is saved, which adds new history entries.

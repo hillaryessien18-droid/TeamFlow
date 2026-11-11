@@ -15,15 +15,17 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from notifications.services import send_email_later
+
 from .serializers import (
     ChangePasswordSerializer,
     DetailSerializer,
     EmailTokenObtainPairSerializer,
     LogoutSerializer,
+    MeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RegisterSerializer,
-    UserSerializer,
 )
 
 User = get_user_model()
@@ -32,6 +34,26 @@ User = get_user_model()
 def tokens_for(user):
     refresh = RefreshToken.for_user(user)
     return {"refresh": str(refresh), "access": str(refresh.access_token)}
+
+
+def send_welcome_email(user, memberships):
+    if memberships:
+        names = ", ".join(f'"{m.organization.name}"' for m in memberships)
+        next_step = f"You've already joined {names}, so your team's projects are waiting for you."
+    else:
+        next_step = "Create your first organization, then invite your teammates by email."
+    send_email_later(
+        user.email,
+        "Welcome to TeamFlow",
+        (
+            f"Hi {user.full_name},\n\n"
+            "Your TeamFlow account is ready. TeamFlow keeps your team's projects, tasks and deadlines "
+            "in one place, with Kanban boards, comments and notifications.\n\n"
+            f"{next_step}\n\n"
+            f"Get started: {settings.FRONTEND_URL}/\n\n"
+            "Happy planning,\nThe TeamFlow team"
+        ),
+    )
 
 
 class RegisterView(generics.CreateAPIView):
@@ -43,7 +65,10 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return Response({"user": UserSerializer(user).data, **tokens_for(user)}, status=status.HTTP_201_CREATED)
+        # Registration does not prove control of the email address. An invitation
+        # can only be accepted by presenting the token from its emailed link.
+        send_welcome_email(user, [])
+        return Response({"user": MeSerializer(user).data, **tokens_for(user)}, status=status.HTTP_201_CREATED)
 
 
 class LoginView(TokenObtainPairView):
@@ -70,7 +95,7 @@ class LogoutView(APIView):
 
 
 class MeView(generics.RetrieveUpdateAPIView):
-    serializer_class = UserSerializer
+    serializer_class = MeSerializer
     http_method_names = ["get", "patch"]
 
     def get_object(self):

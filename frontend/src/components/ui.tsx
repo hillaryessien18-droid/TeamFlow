@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useState,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
@@ -7,9 +8,10 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 
-import type { Priority, Role, User } from "../api/types";
+import type { Priority, Role, TaskLabel, User } from "../api/types";
 import { initials } from "../lib/format";
-import { PRIORITY_META, ROLE_META } from "../lib/meta";
+import { LABEL_META, PRIORITY_META, ROLE_META } from "../lib/meta";
+import { CheckIcon, EyeIcon, EyeOffIcon } from "./icons";
 
 export function cn(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -87,6 +89,44 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
 ) {
   return <input ref={ref} className={cn(CONTROL, className)} {...props} />;
 });
+
+/** A password field with a show/hide toggle so people can check what they typed. */
+export const PasswordInput = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HTMLInputElement>, "type">>(
+  function PasswordInput({ className, ...props }, ref) {
+    const [visible, setVisible] = useState(false);
+    return (
+      <div className="relative">
+        <input ref={ref} type={visible ? "text" : "password"} className={cn(CONTROL, "pr-10", className)} {...props} />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Hide password" : "Show password"}
+          aria-pressed={visible}
+          className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-700 focus-visible:text-brand-600"
+        >
+          {visible ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+        </button>
+      </div>
+    );
+  },
+);
+
+/** Live feedback under a "confirm password" field. Shows nothing until the person starts typing. */
+export function PasswordMatch({ password, confirm }: Readonly<{ password: string; confirm: string }>) {
+  if (!confirm) return null;
+  const matches = password === confirm;
+  return (
+    <p aria-live="polite" className={cn("flex items-center gap-1 text-xs font-medium", matches ? "text-emerald-600" : "text-red-600")}>
+      {matches ? (
+        <>
+          <CheckIcon className="size-3.5" /> Passwords match
+        </>
+      ) : (
+        "Passwords don't match yet"
+      )}
+    </p>
+  );
+}
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
   function Textarea({ className, ...props }, ref) {
@@ -177,6 +217,10 @@ function Pill({ className, children }: Readonly<{ className: string; children: R
 
 export function PriorityBadge({ priority }: Readonly<{ priority: Priority }>) {
   return <Pill className={PRIORITY_META[priority].badge}>{PRIORITY_META[priority].label}</Pill>;
+}
+
+export function LabelChip({ label }: Readonly<{ label: TaskLabel }>) {
+  return <Pill className={LABEL_META[label.color].chip}>{label.name}</Pill>;
 }
 
 export function RoleBadge({ role }: Readonly<{ role: Role }>) {

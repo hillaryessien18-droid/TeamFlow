@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Membership, Organization, Team
+from .models import Invitation, Membership, Organization, Team
 
 
 class MembershipInline(admin.TabularInline):
@@ -19,3 +19,9 @@ class OrganizationAdmin(admin.ModelAdmin):
 class TeamAdmin(admin.ModelAdmin):
     list_display = ("name", "organization", "created_at")
     filter_horizontal = ("members",)
+
+
+@admin.register(Invitation)
+class InvitationAdmin(admin.ModelAdmin):
+    list_display = ("email", "organization", "role", "invited_by", "expires_at", "accepted_at")
+    readonly_fields = ("token",)

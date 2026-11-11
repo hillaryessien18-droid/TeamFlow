@@ -2,14 +2,14 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { errorMessage } from "../api/client";
-import { memberApi, teamApi } from "../api/endpoints";
-import type { Membership, Role, Team } from "../api/types";
-import { PlusIcon } from "../components/icons";
+import { invitationApi, memberApi, teamApi } from "../api/endpoints";
+import type { Invitation, Membership, Role, Team } from "../api/types";
+import { MailIcon, PlusIcon } from "../components/icons";
 import { ConfirmDialog, Modal } from "../components/Modal";
 import { Alert, Avatar, Button, Card, EmptyState, Field, Input, PageHeader, PageLoader, RoleBadge, Select, Textarea } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 import { useOrg } from "../context/OrgContext";
-import { formatDate } from "../lib/format";
+import { formatDate, relativeTime } from "../lib/format";
 import { ROLE_META, ROLES } from "../lib/meta";
 import { useLoader } from "../lib/useLoader";
 
@@ -19,6 +19,10 @@ export function TeamPage() {
   const navigate = useNavigate();
   const members = useLoader(() => memberApi.list(current!.id), [current?.id]);
   const teams = useLoader(() => teamApi.list(current!.id), [current?.id]);
+  const invitations = useLoader(
+    () => (canManage && current ? invitationApi.list(current.id) : Promise.resolve([] as Invitation[])),
+    [current?.id, canManage],
+  );
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("member");
@@ -36,11 +40,17 @@ export function TeamPage() {
     setInviting(true);
     setNotice(null);
     try {
-      const membership = await memberApi.add({ organization: orgId, email: email.trim(), role });
-      setNotice({ kind: "success", text: `${membership.user.full_name} was added as ${ROLE_META[membership.role].label}.` });
+      const result = await invitationApi.create({ organization: orgId, email: email.trim(), role });
+      if (result.status === "added") {
+        const { membership } = result;
+        setNotice({ kind: "success", text: `${membership.user.full_name} was added as ${ROLE_META[membership.role].label}.` });
+        await Promise.all([members.reload(true), reloadOrgs()]);
+      } else {
+        setNotice({ kind: "success", text: `Invitation emailed to ${result.invitation.email}. They'll join when they accept it.` });
+        await invitations.reload(true);
+      }
       setEmail("");
       setRole("member");
-      await Promise.all([members.reload(true), reloadOrgs()]);
     } catch (err) {
       setNotice({ kind: "error", text: errorMessage(err) });
     } finally {
@@ -64,6 +74,17 @@ export function TeamPage() {
     if (isOwner) return ROLES;
     if (membership.role === "owner") return [];
     return ["admin", "member"];
+  }
+
+  async function invitationAction(action: () => Promise<unknown>, success: string) {
+    setNotice(null);
+    try {
+      await action();
+      setNotice({ kind: "success", text: success });
+      await invitations.reload(true);
+    } catch (err) {
+      setNotice({ kind: "error", text: errorMessage(err) });
+    }
   }
 
   const ownerCount = members.data?.filter((m) => m.role === "owner").length ?? 0;
@@ -201,8 +222,10 @@ export function TeamPage() {
         <div className="space-y-6">
           {canManage ? (
             <Card className="p-5">
-              <h2 className="font-display text-base font-bold text-brand-600">Add a member</h2>
-              <p className="mt-1 text-xs text-slate-500">They need a TeamFlow account with this email.</p>
+              <h2 className="font-display text-base font-bold text-brand-600">Invite a member</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                People who already use TeamFlow are added right away. Anyone else gets an email invitation.
+              </p>
               <form onSubmit={invite} className="mt-4 space-y-3">
                 <Field label="Email" htmlFor="invite-email">
                   <Input id="invite-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="teammate@company.com" />
@@ -217,11 +240,47 @@ export function TeamPage() {
                   </Select>
                 </Field>
                 <Button type="submit" className="w-full" loading={inviting}>
-                  Add member
+                  <MailIcon className="size-4" /> Send invite
                 </Button>
               </form>
             </Card>
           ) : null}
+          {canManage && (invitations.data?.length ?? 0) > 0 && (
+            <Card className="p-5">
+              <h2 className="font-display text-base font-bold text-brand-600">Pending invitations</h2>
+              <ul className="mt-3 divide-y divide-slate-100">
+                {invitations.data?.map((invite) => (
+                  <li key={invite.id} className="py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="min-w-0 truncate text-sm font-medium text-slate-900">{invite.email}</p>
+                      <RoleBadge role={invite.role} />
+                    </div>
+                    <p className={invite.is_expired ? "text-xs text-red-600" : "text-xs text-slate-500"}>
+                      {invite.is_expired ? "Expired" : `Sent ${relativeTime(invite.created_at)}`}
+                      {invite.invited_by && ` by ${invite.invited_by.full_name}`}
+                    </p>
+                    <div className="mt-1.5 flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => void invitationAction(() => invitationApi.resend(invite.id), `Invitation re-sent to ${invite.email}.`)}
+                      >
+                        Resend
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:bg-red-50"
+                        onClick={() => void invitationAction(() => invitationApi.revoke(invite.id), `Invitation for ${invite.email} revoked.`)}
+                      >
+                        Revoke
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           <Card className="p-5">
             <h2 className="font-display text-base font-bold text-brand-600">Roles</h2>
             <dl className="mt-3 space-y-3 text-sm">

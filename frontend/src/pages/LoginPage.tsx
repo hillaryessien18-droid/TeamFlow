@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { errorMessage } from "../api/client";
-import { Alert, Button, Field, Input } from "../components/ui";
+import { Alert, Button, Field, Input, PasswordInput } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 import { AuthLayout } from "./AuthLayout";
 
@@ -47,9 +47,8 @@ export function LoginPage() {
           <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </Field>
         <Field label="Password" htmlFor="password">
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="current-password"
             required
             value={password}

@@ -1,17 +1,31 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, OuterRef, Subquery
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from projects.activity import log_activity
 from projects.models import Task
 
-from .models import Membership, Organization, Team
+from .invitations import accept_invitation, add_member, send_invitation_email
+from .models import Invitation, Membership, Organization, Team, default_invitation_expiry
 from .permissions import Role, query_int, require_role, user_organization_ids
-from .serializers import MembershipCreateSerializer, MembershipSerializer, OrganizationSerializer, TeamSerializer
+from .serializers import (
+    InvitationCreateSerializer,
+    InvitationPreviewSerializer,
+    InvitationResultSerializer,
+    InvitationSerializer,
+    InvitationTokenSerializer,
+    MembershipCreateSerializer,
+    MembershipSerializer,
+    OrganizationSerializer,
+    TeamSerializer,
+)
 
 User = get_user_model()
 
@@ -94,8 +108,7 @@ class MembershipViewSet(
         if Membership.objects.filter(organization=organization, user=invitee).exists():
             raise ValidationError({"email": "This person is already a member."})
 
-        membership = Membership.objects.create(organization=organization, user=invitee, role=data["role"])
-        log_activity(organization, request.user, "member_added", f"added {invitee.full_name} as {data['role']}")
+        membership = add_member(organization, request.user, invitee, data["role"])
         return Response(MembershipSerializer(membership).data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
@@ -179,3 +192,134 @@ class TeamViewSet(viewsets.ModelViewSet):
         require_role(self.request.user, instance.organization_id, Role.ADMIN)
         log_activity(instance.organization, self.request.user, "team_deleted", f'deleted the team "{instance.name}"')
         instance.delete()
+
+
+class InvitationViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """Invite people by email. Admins and owners manage their organizations' invitations.
+
+    Inviting an email that already has an account adds that person immediately; anyone else
+    gets an emailed link and joins when they accept it or sign up with that email.
+    Lists pending invitations only. Filters: ?organization=<id>.
+    """
+
+    serializer_class = InvitationSerializer
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Invitation.objects.none()
+        managed = Membership.objects.filter(user=self.request.user, role__in=[Role.ADMIN, Role.OWNER]).values(
+            "organization_id"
+        )
+        qs = Invitation.objects.filter(organization__in=managed, accepted_at__isnull=True).select_related(
+            "invited_by", "organization"
+        )
+        organization_id = query_int(self.request, "organization")
+        if organization_id:
+            qs = qs.filter(organization_id=organization_id)
+        return qs.order_by("-created_at")
+
+    @extend_schema(request=InvitationCreateSerializer, responses={201: InvitationResultSerializer})
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        serializer = InvitationCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        organization, email, role = data["organization"], data["email"], data["role"]
+
+        actor_role = require_role(request.user, organization.pk, Role.ADMIN)
+        if role == Role.OWNER and actor_role != Role.OWNER:
+            raise PermissionDenied("Only owners can invite another owner.")
+
+        existing = User.objects.filter(email__iexact=email, is_active=True).first()
+        if existing:
+            if Membership.objects.filter(organization=organization, user=existing).exists():
+                raise ValidationError({"email": "This person is already a member."})
+            membership = add_member(organization, request.user, existing, role)
+            return Response(
+                {"status": "added", "membership": MembershipSerializer(membership).data},
+                status=status.HTTP_201_CREATED,
+            )
+
+        invitation = Invitation.objects.filter(
+            organization=organization, email__iexact=email, accepted_at__isnull=True
+        ).first()
+        if invitation:
+            invitation.role = role
+            invitation.invited_by = request.user
+            invitation.expires_at = default_invitation_expiry()
+            invitation.save(update_fields=["role", "invited_by", "expires_at"])
+        else:
+            invitation = Invitation.objects.create(
+                organization=organization, email=email, role=role, invited_by=request.user
+            )
+        send_invitation_email(invitation)
+        log_activity(organization, request.user, "member_invited", f"invited {email} as {role}")
+        return Response(
+            {"status": "invited", "invitation": InvitationSerializer(invitation).data},
+            status=status.HTTP_201_CREATED,
+        )
+
+    def perform_destroy(self, instance):
+        log_activity(
+            instance.organization, self.request.user, "invitation_revoked", f"revoked the invitation for {instance.email}"
+        )
+        instance.delete()
+
+    @extend_schema(request=None)
+    @action(detail=True, methods=["post"])
+    def resend(self, request, pk=None):
+        invitation = self.get_object()
+        invitation.expires_at = default_invitation_expiry()
+        invitation.save(update_fields=["expires_at"])
+        send_invitation_email(invitation)
+        return Response(InvitationSerializer(invitation).data)
+
+    @extend_schema(
+        parameters=[OpenApiParameter("token", OpenApiTypes.STR, required=True)],
+        responses=InvitationPreviewSerializer,
+    )
+    @action(detail=False, methods=["get"], permission_classes=[AllowAny], authentication_classes=[])
+    def lookup(self, request):
+        """Public: describe an invitation link so the invite page can show it before signing in."""
+        invitation = self._by_token(request.query_params.get("token"))
+        if invitation.accepted_at:
+            invite_status = "accepted"
+        elif invitation.is_expired:
+            invite_status = "expired"
+        else:
+            invite_status = "pending"
+        return Response(
+            {
+                "organization_name": invitation.organization.name,
+                "email": invitation.email,
+                "role": invitation.role,
+                "invited_by": invitation.invited_by.full_name if invitation.invited_by else None,
+                "status": invite_status,
+                "account_exists": User.objects.filter(email__iexact=invitation.email).exists(),
+            }
+        )
+
+    @extend_schema(request=InvitationTokenSerializer, responses=MembershipSerializer)
+    @action(detail=False, methods=["post"])
+    def accept(self, request):
+        serializer = InvitationTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        invitation = self._by_token(serializer.validated_data["token"])
+        if invitation.accepted_at:
+            raise ValidationError({"detail": "This invitation has already been used."})
+        if invitation.is_expired:
+            raise ValidationError({"detail": "This invitation has expired. Ask for a new one."})
+        if invitation.email.lower() != request.user.email.lower():
+            raise PermissionDenied(
+                f"This invitation was sent to {invitation.email}. Log in with that account to accept it."
+            )
+        return Response(MembershipSerializer(accept_invitation(invitation, request.user)).data)
+
+    @staticmethod
+    def _by_token(token):
+        invitation = None
+        if token:
+            invitation = Invitation.objects.filter(token=token).select_related("organization", "invited_by").first()
+        if invitation is None:
+            raise NotFound("This invitation link is invalid.")
+        return invitation

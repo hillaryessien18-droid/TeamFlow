@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "accounts",
     "organizations",
     "projects",
+    "notifications",
 ]
 
 MIDDLEWARE = [
@@ -127,6 +128,12 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+# Uploaded attachments. They are only served through the authenticated download endpoint.
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
+MEDIA_URL = "media/"
+MAX_ATTACHMENT_MB = int(os.environ.get("MAX_ATTACHMENT_MB", 10))
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = (MAX_ATTACHMENT_MB + 1) * 1024 * 1024
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -153,7 +160,8 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "TeamFlow API",
-    "DESCRIPTION": "Project management API: organizations, teams, projects, Kanban tasks, comments and activity.",
+    "DESCRIPTION": "Project management API: organizations, invitations, teams, projects, Kanban tasks, labels, "
+    "attachments, comments, notifications, search and activity.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,

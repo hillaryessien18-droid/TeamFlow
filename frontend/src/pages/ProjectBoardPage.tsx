@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "../api/client";
-import { activityApi, memberApi, projectApi, taskApi } from "../api/endpoints";
+import { activityApi, labelApi, memberApi, projectApi, taskApi } from "../api/endpoints";
 import type { Priority, Task, TaskStatus } from "../api/types";
 import { ActivityFeed } from "../components/ActivityFeed";
 import { PlusIcon } from "../components/icons";
@@ -13,7 +13,7 @@ import { Alert, Button, Card, Input, PageHeader, PageLoader, ProgressBar, Select
 import { useAuth } from "../context/AuthContext";
 import { useOrg } from "../context/OrgContext";
 import { dropPosition, groupByStatus, moveTask } from "../lib/board";
-import { formatDate } from "../lib/format";
+import { formatDate, todayISO } from "../lib/format";
 import { PRIORITIES, PRIORITY_META } from "../lib/meta";
 import { useLoader } from "../lib/useLoader";
 
@@ -27,10 +27,13 @@ export function ProjectBoardPage() {
   const tasks = useLoader(() => taskApi.list({ project: projectId }), [projectId]);
   const orgId = project.data?.organization;
   const members = useLoader(() => (orgId ? memberApi.list(orgId) : Promise.resolve([])), [orgId]);
+  const labels = useLoader(() => (orgId ? labelApi.list(orgId) : Promise.resolve([])), [orgId]);
 
   const [search, setSearch] = useState("");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState<"" | Priority>("");
+  const [labelFilter, setLabelFilter] = useState("");
+  const [dueFilter, setDueFilter] = useState<"" | DueFilter>("");
   const [creatingIn, setCreatingIn] = useState<TaskStatus | null>(null);
   const [editingProject, setEditingProject] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
@@ -56,15 +59,18 @@ export function ProjectBoardPage() {
 
   const visibleTasks = useMemo(() => {
     const text = search.trim().toLowerCase();
+    const today = todayISO();
     return (tasks.data ?? []).filter((t) => {
       if (text && !t.title.toLowerCase().includes(text) && !t.description.toLowerCase().includes(text)) return false;
       if (priorityFilter && t.priority !== priorityFilter) return false;
+      if (labelFilter && !t.labels.some((l) => l.id === Number(labelFilter))) return false;
+      if (dueFilter && !matchesDue(t, dueFilter, today)) return false;
       if (assigneeFilter === "me") return t.assignee === user?.id;
       if (assigneeFilter === "none") return t.assignee === null;
       if (assigneeFilter !== "all") return t.assignee === Number(assigneeFilter);
       return true;
     });
-  }, [tasks.data, search, priorityFilter, assigneeFilter, user?.id]);
+  }, [tasks.data, search, priorityFilter, labelFilter, dueFilter, assigneeFilter, user?.id]);
 
   const refreshProgress = () => void project.reload(true);
 
@@ -214,6 +220,28 @@ export function ProjectBoardPage() {
             </option>
           ))}
         </Select>
+        {(labels.data?.length ?? 0) > 0 && (
+          <Select aria-label="Filter by label" value={labelFilter} onChange={(e) => setLabelFilter(e.target.value)} className="sm:w-40">
+            <option value="">Any label</option>
+            {labels.data?.map((label) => (
+              <option key={label.id} value={label.id}>
+                {label.name}
+              </option>
+            ))}
+          </Select>
+        )}
+        <Select
+          aria-label="Filter by deadline"
+          value={dueFilter}
+          onChange={(e) => setDueFilter(e.target.value as "" | DueFilter)}
+          className="sm:w-40"
+        >
+          <option value="">Any deadline</option>
+          <option value="overdue">Overdue</option>
+          <option value="today">Due today</option>
+          <option value="week">Due this week</option>
+          <option value="none">No deadline</option>
+        </Select>
       </div>
 
       <div className={showActivity ? "grid gap-6 xl:grid-cols-[1fr_320px]" : ""}>
@@ -246,6 +274,8 @@ export function ProjectBoardPage() {
         task={openTask}
         initialStatus={creatingIn ?? "todo"}
         members={members.data ?? []}
+        labels={labels.data ?? []}
+        onLabelCreated={(label) => labels.setData((prev) => [...(prev ?? []), label].sort((a, b) => a.name.localeCompare(b.name)))}
         readOnly={archived}
         canManage={canManage}
         onSaved={upsertTask}
@@ -265,6 +295,22 @@ export function ProjectBoardPage() {
       />
     </>
   );
+}
+
+type DueFilter = "overdue" | "today" | "week" | "none";
+
+function addDays(iso: string, days: number) {
+  const date = new Date(`${iso}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function matchesDue(task: Task, filter: DueFilter, today: string) {
+  if (filter === "none") return task.due_date === null;
+  if (!task.due_date) return false;
+  if (filter === "overdue") return task.is_overdue;
+  if (filter === "today") return task.due_date === today;
+  return task.due_date >= today && task.due_date <= addDays(today, 7);
 }
 
 /** `version` changes whenever the board data changes, so the feed quietly refreshes after edits. */

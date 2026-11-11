@@ -118,3 +118,17 @@ def test_change_password(client_for, make_user):
     assert ok.status_code == 200
     user.refresh_from_db()
     assert user.check_password("New-password-22")
+
+
+def test_register_sends_welcome_email(client_for, django_capture_on_commit_callbacks):
+    from django.core import mail
+
+    with django_capture_on_commit_callbacks(execute=True):
+        res = client_for().post(
+            "/api/auth/register/", {"email": "hello@example.com", "full_name": "Hal Lo", "password": "S3cure-pass!"}
+        )
+    assert res.status_code == 201
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].to == ["hello@example.com"]
+    assert mail.outbox[0].subject == "Welcome to TeamFlow"
+    assert "Hi Hal Lo" in mail.outbox[0].body

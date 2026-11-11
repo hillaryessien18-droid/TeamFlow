@@ -4,8 +4,8 @@ import type { Task, TaskStatus } from "../api/types";
 import { groupByStatus } from "../lib/board";
 import { formatDate } from "../lib/format";
 import { STATUSES, STATUS_META } from "../lib/meta";
-import { CalendarIcon, ChatIcon, CheckIcon, PlusIcon } from "./icons";
-import { Avatar, cn, PriorityBadge } from "./ui";
+import { CalendarIcon, ChatIcon, CheckIcon, PaperclipIcon, PlusIcon } from "./icons";
+import { Avatar, cn, LabelChip, PriorityBadge } from "./ui";
 
 interface Props {
   tasks: Task[];
@@ -190,6 +190,13 @@ function TaskCard({ task, draggable, dragging, onOpen, onDragStart, onDragEnd }:
         </h3>
         <PriorityBadge priority={task.priority} />
       </div>
+      {task.labels.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {task.labels.map((label) => (
+            <LabelChip key={label.id} label={label} />
+          ))}
+        </div>
+      )}
       <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
         {task.due_date && (
           <span className={cn("inline-flex items-center gap-1", task.is_overdue && "font-medium text-red-600")}>
@@ -202,6 +209,12 @@ function TaskCard({ task, draggable, dragging, onOpen, onDragStart, onDragEnd }:
           <span className="inline-flex items-center gap-1" aria-label={`${task.comment_count} comments`}>
             <ChatIcon className="size-3.5" />
             {task.comment_count}
+          </span>
+        )}
+        {task.attachment_count > 0 && (
+          <span className="inline-flex items-center gap-1" aria-label={`${task.attachment_count} attachments`}>
+            <PaperclipIcon className="size-3.5" />
+            {task.attachment_count}
           </span>
         )}
         <span className="ml-auto">

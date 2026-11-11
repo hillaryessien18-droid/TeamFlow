@@ -1,15 +1,23 @@
 import { api } from "./client";
 import type {
   Activity,
+  Attachment,
   AuthResponse,
   Comment,
   Dashboard,
+  Invitation,
+  InvitationPreview,
+  InvitationResult,
+  Label,
+  LabelColor,
   Membership,
+  Notification,
   Organization,
   Priority,
   Project,
   ProjectStatus,
   Role,
+  SearchResults,
   Task,
   TaskStatus,
   Team,
@@ -29,7 +37,8 @@ export const authApi = {
     api.post<AuthResponse>("/auth/register/", data).then((r) => r.data),
   logout: (refresh: string) => api.post("/auth/logout/", { refresh }),
   me: () => api.get<User>("/auth/me/").then((r) => r.data),
-  updateMe: (data: { full_name: string }) => api.patch<User>("/auth/me/", data).then((r) => r.data),
+  updateMe: (data: { full_name?: string; email_notifications?: boolean }) =>
+    api.patch<User>("/auth/me/", data).then((r) => r.data),
   changePassword: (current_password: string, new_password: string) =>
     api.post<{ detail: string }>("/auth/change-password/", { current_password, new_password }).then((r) => r.data),
   requestPasswordReset: (email: string) =>
@@ -54,6 +63,19 @@ export const memberApi = {
     api.post<Membership>("/memberships/", data).then((r) => r.data),
   updateRole: (id: number, role: Role) => api.patch<Membership>(`/memberships/${id}/`, { role }).then((r) => r.data),
   remove: (id: number) => api.delete(`/memberships/${id}/`),
+};
+
+export const invitationApi = {
+  list: (organization: number) =>
+    api.get<Invitation[]>("/invitations/", { params: { organization } }).then((r) => r.data),
+  /** Adds an existing account right away, or emails an invitation link to anyone else. */
+  create: (data: { organization: number; email: string; role: Role }) =>
+    api.post<InvitationResult>("/invitations/", data).then((r) => r.data),
+  resend: (id: number) => api.post<Invitation>(`/invitations/${id}/resend/`).then((r) => r.data),
+  revoke: (id: number) => api.delete(`/invitations/${id}/`),
+  lookup: (token: string) =>
+    api.get<InvitationPreview>("/invitations/lookup/", { params: { token } }).then((r) => r.data),
+  accept: (token: string) => api.post<Membership>("/invitations/accept/", { token }).then((r) => r.data),
 };
 
 export interface TeamInput {
@@ -97,10 +119,11 @@ export interface TaskInput {
   priority: Priority;
   assignee: number | null;
   due_date: string | null;
+  label_ids: number[];
 }
 
 export const taskApi = {
-  list: (params: { project?: number; organization?: number; assignee?: number | "me"; status?: TaskStatus }) =>
+  list: (params: { project?: number; organization?: number; assignee?: number | "me" | "none"; status?: TaskStatus }) =>
     api.get<Task[]>("/tasks/", { params: clean(params) }).then((r) => r.data),
   create: (data: TaskInput) => api.post<Task>("/tasks/", data).then((r) => r.data),
   update: (id: number, data: Partial<TaskInput>) => api.patch<Task>(`/tasks/${id}/`, data).then((r) => r.data),
@@ -123,4 +146,49 @@ export const activityApi = {
 
 export const dashboardApi = {
   get: (organization: number) => api.get<Dashboard>("/dashboard/", { params: { organization } }).then((r) => r.data),
+};
+
+export const labelApi = {
+  list: (organization: number) => api.get<Label[]>("/labels/", { params: { organization } }).then((r) => r.data),
+  create: (data: { organization: number; name: string; color: LabelColor }) =>
+    api.post<Label>("/labels/", data).then((r) => r.data),
+  update: (id: number, data: { name?: string; color?: LabelColor }) =>
+    api.patch<Label>(`/labels/${id}/`, data).then((r) => r.data),
+  remove: (id: number) => api.delete(`/labels/${id}/`),
+};
+
+export const attachmentApi = {
+  list: (task: number) => api.get<Attachment[]>("/attachments/", { params: { task } }).then((r) => r.data),
+  upload: (task: number, file: File) => {
+    const form = new FormData();
+    form.append("task", String(task));
+    form.append("file", file);
+    return api.post<Attachment>("/attachments/", form).then((r) => r.data);
+  },
+  remove: (id: number) => api.delete(`/attachments/${id}/`),
+  /** Downloads go through the API (they need the auth header), then are handed to the browser. */
+  download: async (attachment: Attachment) => {
+    const { data } = await api.get<Blob>(`/attachments/${attachment.id}/download/`, { responseType: "blob" });
+    const url = URL.createObjectURL(data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = attachment.name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+};
+
+export const notificationApi = {
+  list: (params: { unread?: boolean; limit?: number } = {}) =>
+    api.get<Notification[]>("/notifications/", { params: clean({ ...params, unread: params.unread ? "true" : undefined }) }).then((r) => r.data),
+  unreadCount: () => api.get<{ unread: number }>("/notifications/unread-count/").then((r) => r.data.unread),
+  markRead: (id: number) => api.post<Notification>(`/notifications/${id}/read/`).then((r) => r.data),
+  markAllRead: () => api.post("/notifications/read-all/"),
+};
+
+export const searchApi = {
+  search: (organization: number, q: string) =>
+    api.get<SearchResults>("/search/", { params: { organization, q } }).then((r) => r.data),
 };

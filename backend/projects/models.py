@@ -34,6 +34,32 @@ class Project(models.Model):
         return self.status == self.Status.ARCHIVED
 
 
+class Label(models.Model):
+    """A colored tag (e.g. "bug", "design") shared by every project in an organization."""
+
+    class Color(models.TextChoices):
+        SLATE = "slate", "Slate"
+        RED = "red", "Red"
+        ORANGE = "orange", "Orange"
+        AMBER = "amber", "Amber"
+        EMERALD = "emerald", "Emerald"
+        SKY = "sky", "Sky"
+        VIOLET = "violet", "Violet"
+        ROSE = "rose", "Rose"
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="labels")
+    name = models.CharField(max_length=40)
+    color = models.CharField(max_length=10, choices=Color.choices, default=Color.SLATE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [models.UniqueConstraint(fields=["organization", "name"], name="unique_label_name_per_org")]
+
+    def __str__(self):
+        return self.name
+
+
 class Task(models.Model):
     class Status(models.TextChoices):
         TODO = "todo", "To Do"
@@ -55,6 +81,7 @@ class Task(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_tasks"
     )
     due_date = models.DateField(null=True, blank=True)
+    labels = models.ManyToManyField(Label, related_name="tasks", blank=True)
     position = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="created_tasks"
@@ -90,6 +117,24 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.author} on {self.task}"
+
+
+class Attachment(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="attachments")
+    file = models.FileField(upload_to="attachments/%Y/%m/")
+    name = models.CharField(max_length=255)
+    size = models.PositiveBigIntegerField()
+    content_type = models.CharField(max_length=120, blank=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="attachments"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return self.name
 
 
 class Activity(models.Model):

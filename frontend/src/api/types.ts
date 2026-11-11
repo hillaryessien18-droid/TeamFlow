@@ -7,6 +7,8 @@ export interface User {
   id: number;
   email: string;
   full_name: string;
+  /** Only present on the signed-in user's own profile. */
+  email_notifications?: boolean;
 }
 
 export interface AuthResponse {
@@ -70,12 +72,14 @@ export interface Task {
   assignee: number | null;
   assignee_detail: User | null;
   due_date: string | null;
+  labels: TaskLabel[];
   position: number;
   created_by: User | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
   comment_count: number;
+  attachment_count: number;
   is_overdue: boolean;
 }
 
@@ -117,4 +121,70 @@ export interface Dashboard {
   project_progress: Project[];
   my_tasks: Task[];
   recent_activity: Activity[];
+}
+
+export type LabelColor = "slate" | "red" | "orange" | "amber" | "emerald" | "sky" | "violet" | "rose";
+
+export interface Label {
+  id: number;
+  organization: number;
+  name: string;
+  color: LabelColor;
+  created_at: string;
+}
+
+export type TaskLabel = Pick<Label, "id" | "name" | "color">;
+
+export interface Attachment {
+  id: number;
+  task: number;
+  name: string;
+  size: number;
+  content_type: string;
+  uploaded_by: User | null;
+  created_at: string;
+}
+
+export interface Notification {
+  id: number;
+  actor: User | null;
+  organization: number | null;
+  organization_name: string | null;
+  project: number | null;
+  task: number | null;
+  verb: string;
+  message: string;
+  link: string;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface Invitation {
+  id: number;
+  organization: number;
+  email: string;
+  role: Role;
+  invited_by: User | null;
+  created_at: string;
+  expires_at: string;
+  is_expired: boolean;
+}
+
+export type InvitationResult =
+  | { status: "added"; membership: Membership }
+  | { status: "invited"; invitation: Invitation };
+
+export interface InvitationPreview {
+  organization_name: string;
+  email: string;
+  role: Role;
+  invited_by: string | null;
+  status: "pending" | "accepted" | "expired";
+  account_exists: boolean;
+}
+
+export interface SearchResults {
+  projects: Project[];
+  tasks: Task[];
 }

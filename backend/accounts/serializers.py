@@ -13,6 +13,13 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "email"]
 
 
+class MeSerializer(UserSerializer):
+    """The signed-in user, including private preferences other members don't see."""
+
+    class Meta(UserSerializer.Meta):
+        fields = [*UserSerializer.Meta.fields, "email_notifications"]
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, style={"input_type": "password"})
 
@@ -41,7 +48,7 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         attrs[self.username_field] = attrs.get(self.username_field, "").lower()
         data = super().validate(attrs)
-        data["user"] = UserSerializer(self.user).data
+        data["user"] = MeSerializer(self.user).data
         return data
 
 

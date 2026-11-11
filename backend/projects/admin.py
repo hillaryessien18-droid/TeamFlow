@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Activity, Comment, Project, Task
+from .models import Activity, Attachment, Comment, Label, Project, Task
 
 
 @admin.register(Project)
@@ -18,6 +18,16 @@ class TaskAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Comment)
+
+
+@admin.register(Label)
+class LabelAdmin(admin.ModelAdmin):
+    list_display = ("name", "color", "organization")
+
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ("name", "task", "size", "uploaded_by", "created_at")
 
 
 @admin.register(Activity)

@@ -31,6 +31,7 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=150)
+    email_notifications = models.BooleanField(default=True, help_text="Send notifications by email as well as in-app.")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]

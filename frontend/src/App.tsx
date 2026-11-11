@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { OrgProvider } from "./context/OrgContext";
 import { ActivityPage } from "./pages/ActivityPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { InvitePage } from "./pages/InvitePage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ForgotPasswordPage, ResetPasswordPage } from "./pages/PasswordResetPages";
@@ -13,6 +14,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { ProjectBoardPage } from "./pages/ProjectBoardPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { SearchPage } from "./pages/SearchPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { TeamPage } from "./pages/TeamPage";
 
@@ -38,6 +40,7 @@ export function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       </Route>
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/invite/:token" element={<InvitePage />} />
       <Route element={<RequireAuth />}>
         <Route element={<Layout />}>
           <Route index element={<DashboardPage />} />
@@ -45,6 +48,7 @@ export function AppRoutes() {
           <Route path="/projects/:projectId" element={<ProjectBoardPage />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="/activity" element={<ActivityPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

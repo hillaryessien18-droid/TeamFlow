@@ -48,7 +48,7 @@ _Add screenshots to `docs/screenshots/` and reference them here, for example:_
 ## Technology Stack
 
 - **Frontend:** React 18, TypeScript, Vite, Tailwind CSS v4, React Router, Axios
-- **Backend:** Python, Django 5, Django REST Framework, SimpleJWT, drf-spectacular
+- **Backend:** Python, Django 5.2 or 6.x, Django REST Framework, SimpleJWT, drf-spectacular
 - **Database:** PostgreSQL (SQLite fallback for quick local runs)
 - **Testing:** Pytest + pytest-django (backend), Vitest + React Testing Library (frontend)
 - **Deployment:** Vercel (frontend), Render web service + Render PostgreSQL (backend, `render.yaml` blueprint), WhiteNoise for static files, Gunicorn
@@ -85,7 +85,7 @@ TeamFlow/
 
 - Python 3.12+
 - Node.js 20+
-- PostgreSQL 14+ (or Docker, using the included `docker-compose.yml`). If you skip it, the backend falls back to SQLite.
+- PostgreSQL 15+ for Django 6.1 (or Docker, using the included `docker-compose.yml`). If you skip it, the backend falls back to SQLite.
 
 ### Backend Setup
 
@@ -149,6 +149,8 @@ TeamFlow/
    - `CSRF_TRUSTED_ORIGINS=https://<your-app>.vercel.app`
    - SMTP `EMAIL_*` variables, if you want real reset emails.
 3. Optional: run `python manage.py seed_demo` from the Render shell.
+
+The included free Render web service stores uploads on an ephemeral filesystem, so task attachments disappear when it restarts or redeploys. Configure persistent file storage before relying on attachments in a deployed app.
 
 **Frontend → Vercel**
 
@@ -214,14 +216,14 @@ Deleting an organization cascades to its memberships, teams, projects, tasks, co
 
 ## Testing
 
-**Backend:** 39 Pytest tests cover auth flows, role hierarchy, organization isolation, projects, Kanban moves, comments, activity, the dashboard and the seed command.
+**Backend:** Pytest tests cover auth flows, role hierarchy, organization isolation, projects, Kanban moves, comments, activity, the dashboard, invitations, attachments, notifications and the seed command.
 
 ```bash
 cd backend
 pytest
 ```
 
-**Frontend:** 27 Vitest + React Testing Library tests cover login/register/reset flows, route protection, session restore, Kanban rendering, drag-and-drop, keyboard access, read-only boards, board ordering logic, and error formatting.
+**Frontend:** Vitest + React Testing Library tests cover login/register/reset flows, route protection, session restore, Kanban rendering, drag-and-drop, keyboard access, read-only boards, board ordering logic, and error formatting.
 
 ```bash
 cd frontend
@@ -260,10 +262,8 @@ npm run typecheck   # TypeScript strict mode
 
 ## Future Improvements
 
-- Email invitations for people who don't have an account yet.
 - Real-time board updates over WebSockets (Django Channels).
-- File attachments on tasks, plus @mentions and notifications in comments.
-- Subtasks, labels and saved filters. Calendar and timeline views.
+- @mentions in comments, subtasks, saved filters, calendar and timeline views.
 - Pagination and full-text search for large organizations.
 - End-to-end tests (Playwright) and a GitHub Actions CI pipeline.
 - Store refresh tokens in httpOnly cookies to reduce XSS exposure.

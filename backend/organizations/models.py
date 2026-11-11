@@ -1,5 +1,9 @@
+import secrets
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class Organization(models.Model):
@@ -50,3 +54,37 @@ class Team(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.organization})"
+
+
+def default_invitation_expiry():
+    return timezone.now() + timedelta(days=7)
+
+
+class Invitation(models.Model):
+    """An emailed invitation for someone who doesn't have a TeamFlow account yet."""
+
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="invitations")
+    email = models.EmailField()
+    role = models.CharField(max_length=10, choices=Membership.Role.choices, default=Membership.Role.MEMBER)
+    token = models.CharField(max_length=64, unique=True, default=secrets.token_urlsafe)
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="sent_invitations"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=default_invitation_expiry)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["email", "accepted_at"])]
+
+    def __str__(self):
+        return f"{self.email} -> {self.organization} ({self.role})"
+
+    @property
+    def is_expired(self):
+        return self.expires_at < timezone.now()
+
+    @property
+    def is_pending(self):
+        return self.accepted_at is None and not self.is_expired

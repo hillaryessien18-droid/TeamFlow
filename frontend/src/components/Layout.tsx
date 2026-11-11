@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import { useOrg } from "../context/OrgContext";
-import { ClockIcon, CogIcon, FolderIcon, HomeIcon, Logo, LogoutIcon, MenuIcon, UserIcon, UsersIcon } from "./icons";
+import { ClockIcon, CogIcon, FolderIcon, HomeIcon, Logo, LogoutIcon, MenuIcon, SearchIcon, UserIcon, UsersIcon } from "./icons";
+import { NotificationBell } from "./NotificationBell";
 import { OrgFormFields, OrgFormModal } from "./OrgFormModal";
 import { Avatar, Card, cn, PageLoader, RoleBadge } from "./ui";
 
@@ -102,6 +103,39 @@ function Sidebar({ onCreateOrg }: Readonly<{ onCreateOrg: () => void }>) {
   );
 }
 
+function GlobalSearch() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const onSearchPage = location.pathname === "/search";
+  const [text, setText] = useState(onSearchPage ? (searchParams.get("q") ?? "") : "");
+
+  // Keep the box in sync when the search page's query changes, and clear it elsewhere.
+  useEffect(() => {
+    setText(onSearchPage ? (searchParams.get("q") ?? "") : "");
+  }, [onSearchPage, searchParams]);
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    const q = text.trim();
+    if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
+  }
+
+  return (
+    <form role="search" onSubmit={submit} className="relative w-full max-w-md">
+      <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+      <input
+        type="search"
+        aria-label="Search projects and tasks"
+        placeholder="Search projects and tasks…"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className="block w-full rounded-lg border-0 bg-slate-100/80 py-2 pl-9 pr-3 text-sm text-slate-900 ring-1 ring-inset ring-transparent placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-brand-600"
+      />
+    </form>
+  );
+}
+
 function Onboarding() {
   const { user } = useAuth();
   const { reload, selectOrg } = useOrg();
@@ -161,16 +195,22 @@ export function Layout() {
       )}
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 py-2.5 backdrop-blur sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
-            className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100"
+            className="rounded-md p-1.5 text-slate-600 hover:bg-slate-100 lg:hidden"
           >
             <MenuIcon />
           </button>
-          <Logo />
+          <Logo className="hidden sm:inline-flex lg:hidden" />
+          {organizations.length > 0 && (
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
+              <GlobalSearch />
+              <NotificationBell />
+            </div>
+          )}
         </header>
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {renderMain()}

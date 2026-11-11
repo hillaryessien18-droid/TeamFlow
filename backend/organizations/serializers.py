@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
 
-from .models import Membership, Organization, Team
+from .models import Invitation, Membership, Organization, Team
 from .permissions import get_role
 
 User = get_user_model()
@@ -86,3 +86,43 @@ class TeamSerializer(serializers.ModelSerializer):
                     {"member_ids": f"Not members of this organization: {', '.join(outsiders)}"}
                 )
         return attrs
+
+
+class InvitationSerializer(serializers.ModelSerializer):
+    invited_by = UserSerializer(read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Invitation
+        fields = ["id", "organization", "email", "role", "invited_by", "created_at", "expires_at", "is_expired"]
+        read_only_fields = fields
+
+
+class InvitationCreateSerializer(serializers.Serializer):
+    organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(choices=Membership.Role.choices, default=Membership.Role.MEMBER)
+
+    def validate_email(self, value):
+        return value.strip().lower()
+
+
+class InvitationResultSerializer(serializers.Serializer):
+    """Inviting an existing account adds them right away; anyone else gets an emailed invitation."""
+
+    status = serializers.ChoiceField(choices=["added", "invited"])
+    membership = MembershipSerializer(required=False)
+    invitation = InvitationSerializer(required=False)
+
+
+class InvitationTokenSerializer(serializers.Serializer):
+    token = serializers.CharField()
+
+
+class InvitationPreviewSerializer(serializers.Serializer):
+    organization_name = serializers.CharField()
+    email = serializers.EmailField()
+    role = serializers.CharField()
+    invited_by = serializers.CharField(allow_null=True)
+    status = serializers.ChoiceField(choices=["pending", "accepted", "expired"])
+    account_exists = serializers.BooleanField()
