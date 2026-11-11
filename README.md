@@ -27,20 +27,40 @@ Demo accounts are created by `python manage.py seed_demo` (password `TeamFlow-de
 
 ## Screenshots
 
-_Add screenshots to `docs/screenshots/` and reference them here, for example:_
+Captured from the seeded demo organization (`python manage.py seed_demo`).
 
-| Dashboard | Kanban board | Task details |
-| --------- | ------------ | ------------ |
-| `![Dashboard](docs/screenshots/dashboard.png)` | `![Board](docs/screenshots/board.png)` | `![Task](docs/screenshots/task.png)` |
+**Dashboard:** project health, task status, priorities and recent activity at a glance.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+**Kanban board:** drag-and-drop tasks between To Do, In Progress and Completed, with filters for text, assignee, priority and deadline.
+
+![Kanban board](docs/screenshots/board.png)
+
+**Task details:** edit status, priority, assignee, deadline and labels, and use the tabs for comments, files and history.
+
+![Task details](docs/screenshots/task.png)
+
+| Landing page | Log in |
+| ------------ | ------ |
+| ![Landing page](docs/screenshots/landing.png) | ![Log in](docs/screenshots/login.png) |
+
+| Projects | Members & Teams |
+| -------- | --------------- |
+| ![Projects](docs/screenshots/projects.png) | ![Members and teams](docs/screenshots/team.png) |
 
 ## Features
 
 - **Authentication:** register, log in, log out (refresh-token blacklisting), password reset by email, change password, profile editing.
-- **Organizations & teams:** create multiple organizations, switch between them, add members by email, change roles, remove members or leave, and group members into teams.
+- **Organizations & teams:** create multiple organizations, switch between them, change roles, remove members or leave, and group members into teams.
+- **Invitations:** existing users are added right away. Anyone else gets an email invitation link that expires after 7 days. Admins can resend or revoke pending invitations, and the invitee accepts by logging in or creating an account with the invited email.
 - **Projects:** create, edit, delete, archive and restore projects. Archived projects are read-only. Projects can be searched and attached to a team.
 - **Kanban board:** drag-and-drop tasks between and within the To Do, In Progress and Completed columns. Card order is saved on the server. The board can be filtered by text, assignee and priority.
 - **Tasks:** title, description, priority (Low/Medium/High/Urgent), deadline with overdue highlighting, assignee (who must be a member of the organization), and a completion timestamp.
+- **Labels & attachments:** colour-coded labels shared across the organization (filter tasks with `?label=`), and file uploads on tasks (size limit set by `MAX_ATTACHMENT_MB`, 10 MB by default).
 - **Comments & activity history:** threaded discussion per task (authors can edit their comments, and admins can moderate them). An append-only audit log covers the organization, each project and each task.
+- **Notifications:** an in-app bell with an unread count for assignments, completions, comments, new members and accepted invitations. Each notification can also go out by email, and users can turn that off on their profile. `python manage.py send_due_reminders`, run daily from a cron job, reminds assignees about tasks due today or tomorrow.
+- **Search:** one search box finds projects and tasks by title, description or label.
 - **Role-based access:** Owner, Admin and Member rules are enforced on the API and reflected in the UI (see [Security](#security)).
 - **Dashboard:** active/archived projects, open and overdue tasks, completion rate, status breakdown, per-project progress bars, "my open tasks", open tasks by priority, and recent activity.
 - **API documentation:** OpenAPI 3 schema with Swagger UI and ReDoc.
@@ -67,13 +87,15 @@ flowchart LR
 - **Organization context:** the selected organization is kept in React context (`OrgContext`). Each page fetches data scoped to it with `?organization=<id>`.
 - **Backend apps:**
   - `accounts`: email-based custom user model and the auth endpoints.
-  - `organizations`: organizations, memberships with roles, teams, and the shared permission helpers.
-  - `projects`: projects, tasks, comments, the activity log, and the dashboard aggregation.
+  - `organizations`: organizations, memberships with roles, teams, email invitations, and the shared permission helpers.
+  - `projects`: projects, tasks, labels, attachments, comments, the activity log, search, and the dashboard aggregation.
+  - `notifications`: in-app notifications, optional notification emails, and the due-date reminder command.
 - **CORS** is restricted to the configured frontend origins, and **WhiteNoise** serves the admin and API-docs static files.
 
 ```
 TeamFlow/
-├── backend/            Django project (teamflow/), apps: accounts, organizations, projects; tests/
+├── backend/            Django project (teamflow/), apps: accounts, organizations, projects, notifications; tests/
+├── docs/screenshots/   README screenshots
 ├── frontend/           React + TS app: src/api, src/context, src/components, src/pages, src/lib
 ├── render.yaml         Render blueprint (API + PostgreSQL)
 └── docker-compose.yml  Local PostgreSQL
@@ -173,10 +195,15 @@ In Swagger, call `POST /api/auth/login/`, copy the `access` token, and click **A
 | Auth          | `POST /api/auth/register/`, `login/`, `refresh/`, `logout/`, `change-password/`, `password-reset/`, `password-reset/confirm/`; `GET/PATCH /api/auth/me/` |
 | Organizations | `GET/POST /api/organizations/`, `GET/PATCH/DELETE /api/organizations/{id}/`                                                                                       |
 | Members       | `GET /api/memberships/?organization=`, `POST /api/memberships/` (by email), `PATCH/DELETE /api/memberships/{id}/`                                                 |
+| Invitations   | `GET /api/invitations/?organization=`, `DELETE /api/invitations/{id}/`, `POST /api/invitations/{id}/resend/`, `GET /api/invitations/lookup/?token=` (public), `POST /api/invitations/accept/` |
 | Teams         | `GET/POST /api/teams/?organization=`, `GET/PATCH/DELETE /api/teams/{id}/`                                                                                         |
 | Projects      | `GET/POST /api/projects/?organization=&status=&search=`, `GET/PATCH/DELETE /api/projects/{id}/`, `POST /api/projects/{id}/archive/`, `.../unarchive/`              |
-| Tasks         | `GET/POST /api/tasks/?project=&assignee=me&status=&priority=`, `GET/PATCH/DELETE /api/tasks/{id}/`, `POST /api/tasks/{id}/move/` `{status, position}`             |
+| Tasks         | `GET/POST /api/tasks/?project=&assignee=me&status=&priority=&label=`, `GET/PATCH/DELETE /api/tasks/{id}/`, `POST /api/tasks/{id}/move/` `{status, position}`      |
+| Labels        | `GET/POST /api/labels/?organization=`, `GET/PATCH/DELETE /api/labels/{id}/`                                                                                       |
+| Attachments   | `GET /api/attachments/?task=`, `POST /api/attachments/` (multipart `task`, `file`), `DELETE /api/attachments/{id}/`, `GET /api/attachments/{id}/download/`         |
 | Comments      | `GET/POST /api/comments/?task=`, `PATCH/DELETE /api/comments/{id}/`                                                                                               |
+| Notifications | `GET /api/notifications/?unread=1`, `GET /api/notifications/unread-count/`, `POST /api/notifications/{id}/read/`, `POST /api/notifications/read-all/`, `DELETE /api/notifications/{id}/` |
+| Search        | `GET /api/search/?organization=&q=`                                                                                                                               |
 | Activity      | `GET /api/activity/?organization=&project=&task=&limit=`                                                                                                          |
 | Dashboard     | `GET /api/dashboard/?organization=`                                                                                                                               |
 | Health        | `GET /api/health/`                                                                                                                                                |
@@ -210,6 +237,10 @@ erDiagram
 | **Project**      | Belongs to an organization, with an optional team. Has `status` (`active`/`archived`) and `due_date`. Indexed on (organization, status).                                                                                               |
 | **Task**         | Belongs to a project. Has `status`, `priority`, `assignee` (FK User, SET NULL), `due_date`, `position` (order within a column) and `completed_at`. Indexed on (project, status, position) and (assignee, status).                       |
 | **Comment**      | Belongs to a task and has an `author` and `body`.                                                                                                                                                                                      |
+| **Label**        | A colored tag that belongs to an organization. M2M with Task.                                                                                                                                                                          |
+| **Attachment**   | A file uploaded to a task, with the uploader, original name and size.                                                                                                                                                                  |
+| **Invitation**   | A pending email invite to an organization with a `role`, a single-use token, `expires_at` (7 days) and `accepted_at`.                                                                                                                  |
+| **Notification** | An in-app message for a `recipient`, with `actor`, `verb`, optional task/link and `read_at`.                                                                                                                                          |
 | **Activity**     | Append-only audit log: `organization`, optional `project`/`task`, `actor`, `verb`, `message`. Project, task and actor links use `SET NULL` so history survives deletions.                                                              |
 
 Deleting an organization cascades to its memberships, teams, projects, tasks, comments and activity. Removing a member unassigns their tasks and takes them off the organization's teams.
