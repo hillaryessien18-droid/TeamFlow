@@ -33,3 +33,6 @@ services:
         sync: false
       - key: CSRF_TRUSTED_ORIGINS
         sync: false
+      # Optional: allow Vercel preview deployments, e.g. ^https://teamflow-[a-z0-9-]+\.vercel\.app$
+      - key: CORS_ALLOWED_ORIGIN_REGEXES
+        sync: false

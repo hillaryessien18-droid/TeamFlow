@@ -186,9 +186,12 @@ The included free Render web service stores uploads on an ephemeral filesystem, 
 
 **Frontend → Vercel**
 
-1. Import the repo in Vercel and set **Root Directory** to `frontend`. The framework preset is Vite, the build command is `npm run build`, and the output directory is `dist`.
-2. Add the environment variable `VITE_API_URL=https://<your-api>.onrender.com`.
-3. `frontend/vercel.json` rewrites every route to `index.html`, so deep links such as `/projects/3` work.
+1. In Vercel, choose **Add New → Project** and import the GitHub repo. You can keep the default settings. The root `vercel.json` installs and builds `frontend/` and serves `frontend/dist`. If you set **Root Directory** to `frontend` instead, `frontend/vercel.json` is used and Vercel detects Vite automatically.
+2. Under **Environment Variables**, add `VITE_API_URL=https://<your-api>.onrender.com` (no trailing slash, without `/api`) for Production and Preview, then deploy. The build stops with an error if this variable is missing, so a deploy can't silently point at `localhost`.
+3. Copy the production URL (for example `https://teamflow.vercel.app`) into the Render variables listed above, then redeploy the API.
+4. Optional: to let preview deployments call the API, set `CORS_ALLOWED_ORIGIN_REGEXES=^https://<your-project>-[a-z0-9-]+\.vercel\.app$` on Render.
+
+Both `vercel.json` files rewrite every route to `index.html`, so deep links such as `/projects/3` work. They also cache the hashed files in `/assets/` for a year and add basic security headers.
 
 ## API Documentation
 
