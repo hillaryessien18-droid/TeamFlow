@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { ArrowRightIcon, CheckIcon, GithubIcon, Logo, MenuIcon } from "../components/icons";
+import { ArrowRightIcon, CheckIcon, Logo, MenuIcon } from "../components/icons";
 import { cn } from "../components/ui";
 
 const REPO_URL = "https://github.com/hillaryessien18-droid/TeamFlow";
@@ -490,9 +490,6 @@ export function LandingPage() {
               <Link to="/register" className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-500">
                 Get started free <ArrowRightIcon className="size-4" />
               </Link>
-              <a href={REPO_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-brand-600 ring-1 ring-brand-200 hover:bg-brand-50">
-                <GithubIcon className="size-4" /> View source
-              </a>
             </div>
           </div>
         </section>

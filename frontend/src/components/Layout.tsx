@@ -3,13 +3,30 @@ import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "reac
 
 import { useAuth } from "../context/AuthContext";
 import { useOrg } from "../context/OrgContext";
-import { ClockIcon, CogIcon, FolderIcon, HomeIcon, Logo, LogoutIcon, MenuIcon, SearchIcon, UserIcon, UsersIcon } from "./icons";
+import { projectApi } from "../api/endpoints";
+import { projectColor } from "../lib/meta";
+import { useLoader } from "../lib/useLoader";
+import {
+  CheckSquareIcon,
+  ClockIcon,
+  CogIcon,
+  FolderIcon,
+  HomeIcon,
+  Logo,
+  LogoutIcon,
+  MenuIcon,
+  PlusIcon,
+  SearchIcon,
+  UserIcon,
+  UsersIcon,
+} from "./icons";
 import { NotificationBell } from "./NotificationBell";
 import { OrgFormFields, OrgFormModal } from "./OrgFormModal";
 import { Avatar, Card, cn, PageLoader, RoleBadge } from "./ui";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: HomeIcon, end: true },
+  { to: "/my-tasks", label: "My Tasks", icon: CheckSquareIcon, end: false },
   { to: "/projects", label: "Projects", icon: FolderIcon, end: false },
   { to: "/team", label: "Members & Teams", icon: UsersIcon, end: false },
   { to: "/activity", label: "Activity", icon: ClockIcon, end: false },
@@ -58,7 +75,8 @@ function Sidebar({ onCreateOrg }: Readonly<{ onCreateOrg: () => void }>) {
         </div>
       )}
 
-      <nav className="flex-1 space-y-1" aria-label="Main">
+      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-1">
+      <nav className="space-y-1" aria-label="Main">
         {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -76,6 +94,8 @@ function Sidebar({ onCreateOrg }: Readonly<{ onCreateOrg: () => void }>) {
           </NavLink>
         ))}
       </nav>
+      {current && <SidebarProjects organizationId={current.id} canCreate={current.my_role === "owner" || current.my_role === "admin"} />}
+      </div>
 
       <div className="space-y-1 border-t border-white/10 pt-4">
         <NavLink
@@ -100,6 +120,59 @@ function Sidebar({ onCreateOrg }: Readonly<{ onCreateOrg: () => void }>) {
         </button>
       </div>
     </div>
+  );
+}
+
+/** Quick links to the organization's active projects, like the project list in Asana or Linear. */
+function SidebarProjects({ organizationId, canCreate }: Readonly<{ organizationId: number; canCreate: boolean }>) {
+  const location = useLocation();
+  // Refetch on navigation so new, renamed or archived projects show up without a page reload.
+  const projects = useLoader(
+    () => projectApi.list({ organization: organizationId, status: "active" }),
+    [organizationId, location.pathname],
+  );
+  const list = projects.data ?? [];
+
+  return (
+    <section aria-labelledby="sidebar-projects">
+      <div className="mb-1 flex items-center justify-between px-3">
+        <h2 id="sidebar-projects" className="font-sans text-xs font-semibold uppercase tracking-wider text-brand-300">
+          Projects
+        </h2>
+        {canCreate && (
+          <NavLink
+            to="/projects?new=1"
+            aria-label="New project"
+            title="New project"
+            className="rounded p-0.5 text-brand-300 hover:bg-white/10 hover:text-white"
+          >
+            <PlusIcon className="size-4" />
+          </NavLink>
+        )}
+      </div>
+      <ul className="space-y-0.5">
+        {list.map((project) => (
+          <li key={project.id}>
+            <NavLink
+              to={`/projects/${project.id}`}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition",
+                  isActive ? "bg-white/15 font-semibold text-white" : "text-brand-100 hover:bg-white/10 hover:text-white",
+                )
+              }
+            >
+              <span className={cn("size-2.5 shrink-0 rounded-sm", projectColor(project.id))} />
+              <span className="truncate">{project.name}</span>
+              {project.task_count > 0 && (
+                <span className="ml-auto text-xs tabular-nums text-brand-300">{project.task_count - project.completed_count}</span>
+              )}
+            </NavLink>
+          </li>
+        ))}
+        {!projects.loading && list.length === 0 && <li className="px-3 py-1.5 text-xs text-brand-300">No active projects</li>}
+      </ul>
+    </section>
   );
 }
 

@@ -5,16 +5,17 @@ import { errorMessage } from "../api/client";
 import { activityApi, labelApi, memberApi, projectApi, taskApi } from "../api/endpoints";
 import type { Priority, Task, TaskStatus } from "../api/types";
 import { ActivityFeed } from "../components/ActivityFeed";
-import { PlusIcon } from "../components/icons";
+import { ColumnsIcon, ListIcon, PlusIcon } from "../components/icons";
 import { KanbanBoard } from "../components/KanbanBoard";
 import { ProjectFormModal } from "../components/ProjectFormModal";
+import { TaskListView } from "../components/TaskListView";
 import { TaskModal } from "../components/TaskModal";
-import { Alert, Button, Card, Input, PageHeader, PageLoader, ProgressBar, Select } from "../components/ui";
+import { Alert, Button, Card, cn, Input, PageHeader, PageLoader, ProgressBar, Select } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
 import { useOrg } from "../context/OrgContext";
 import { dropPosition, groupByStatus, moveTask } from "../lib/board";
 import { formatDate, todayISO } from "../lib/format";
-import { PRIORITIES, PRIORITY_META } from "../lib/meta";
+import { PRIORITIES, PRIORITY_META, projectColor } from "../lib/meta";
 import { useLoader } from "../lib/useLoader";
 
 export function ProjectBoardPage() {
@@ -50,6 +51,14 @@ export function ProjectBoardPage() {
 
   const openTaskId = Number(searchParams.get("task")) || null;
   const openTask = tasks.data?.find((t) => t.id === openTaskId) ?? null;
+  const view = searchParams.get("view") === "list" ? "list" : "board";
+  function setView(next: "board" | "list") {
+    const params = new URLSearchParams(searchParams);
+    if (next === "list") params.set("view", "list");
+    else params.delete("view");
+    setSearchParams(params, { replace: true });
+  }
+
   function setOpenTask(id: number | null) {
     const next = new URLSearchParams(searchParams);
     if (id) next.set("task", String(id));
@@ -124,7 +133,17 @@ export function ProjectBoardPage() {
         / <span className="text-slate-700">{p.name}</span>
       </nav>
       <PageHeader
-        title={p.name}
+        title={
+          <span className="flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl text-lg font-bold text-white", projectColor(p.id))}
+            >
+              {p.name.trim()[0]?.toUpperCase()}
+            </span>
+            <span className="min-w-0 truncate">{p.name}</span>
+          </span>
+        }
         description={
           <span className="flex flex-wrap gap-x-3 gap-y-1">
             {p.team_name && <span>Team: {p.team_name}</span>}
@@ -186,14 +205,37 @@ export function ProjectBoardPage() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div role="tablist" aria-label="View" className="inline-flex shrink-0 self-start rounded-lg bg-slate-100 p-1">
+          {(
+            [
+              { key: "board", label: "Board", icon: ColumnsIcon },
+              { key: "list", label: "List", icon: ListIcon },
+            ] as const
+          ).map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={view === key}
+              onClick={() => setView(key)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition",
+                view === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900",
+              )}
+            >
+              <Icon className="size-4" />
+              {label}
+            </button>
+          ))}
+        </div>
         <Input
           type="search"
           aria-label="Filter tasks"
           placeholder="Filter tasks…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="sm:max-w-xs"
+          className="sm:max-w-56"
         />
         <Select aria-label="Filter by assignee" value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)} className="sm:w-48">
           <option value="all">Everyone</option>
@@ -245,9 +287,9 @@ export function ProjectBoardPage() {
       </div>
 
       <div className={showActivity ? "grid gap-6 xl:grid-cols-[1fr_320px]" : ""}>
-        {tasks.loading ? (
-          <PageLoader label="Loading board…" />
-        ) : (
+        {tasks.loading && <PageLoader label="Loading board…" />}
+        {!tasks.loading && view === "list" && <TaskListView tasks={visibleTasks} onOpen={(task) => setOpenTask(task.id)} />}
+        {!tasks.loading && view === "board" && (
           <KanbanBoard
             tasks={visibleTasks}
             readOnly={archived}

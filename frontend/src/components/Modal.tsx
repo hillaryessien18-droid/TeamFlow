@@ -9,7 +9,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  size?: "md" | "lg";
+  size?: "md" | "lg" | "xl";
 }
 
 export function Modal({ open, onClose, title, children, size = "md" }: ModalProps) {
@@ -47,7 +47,7 @@ export function Modal({ open, onClose, title, children, size = "md" }: ModalProp
           aria-labelledby={titleId}
           className={cn(
             "relative m-0 w-full rounded-xl border-0 bg-white p-0 text-inherit shadow-xl",
-            size === "lg" ? "max-w-3xl" : "max-w-lg",
+            { md: "max-w-lg", lg: "max-w-3xl", xl: "max-w-5xl" }[size],
           )}
         >
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">

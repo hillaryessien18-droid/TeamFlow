@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage } from "../api/client";
 import { projectApi } from "../api/endpoints";
@@ -9,7 +9,8 @@ import { ConfirmDialog } from "../components/Modal";
 import { ProjectFormModal } from "../components/ProjectFormModal";
 import { Alert, Button, Card, cn, EmptyState, Input, PageHeader, PageLoader, ProgressBar } from "../components/ui";
 import { useOrg } from "../context/OrgContext";
-import { formatDate } from "../lib/format";
+import { formatDate, parseDate, todayISO } from "../lib/format";
+import { projectColor } from "../lib/meta";
 import { useLoader } from "../lib/useLoader";
 
 function emptyStateCopy(query: string, status: ProjectStatus, canManage: boolean) {
@@ -28,6 +29,17 @@ function emptyStateCopy(query: string, status: ProjectStatus, canManage: boolean
   };
 }
 
+/** A delivery-health status like the ones real project tools show next to each project. */
+function projectHealth(project: Project): { label: string; className: string } | null {
+  if (project.status === "archived") return { label: "Archived", className: "bg-slate-100 text-slate-600" };
+  if (project.task_count > 0 && project.progress === 100) return { label: "Complete", className: "bg-emerald-50 text-emerald-700" };
+  if (!project.due_date) return null;
+  const daysLeft = Math.round((parseDate(project.due_date).getTime() - parseDate(todayISO()).getTime()) / 86_400_000);
+  if (daysLeft < 0) return { label: "Overdue", className: "bg-red-50 text-red-700" };
+  if (daysLeft <= 7) return { label: "Due soon", className: "bg-amber-50 text-amber-800" };
+  return { label: "On track", className: "bg-emerald-50 text-emerald-700" };
+}
+
 interface ProjectCardProps {
   project: Project;
   canManage: boolean;
@@ -38,23 +50,34 @@ interface ProjectCardProps {
 
 function ProjectCard({ project, canManage, onEdit, onToggleArchive, onDelete }: Readonly<ProjectCardProps>) {
   const active = project.status === "active";
+  const health = projectHealth(project);
   return (
-    <Card className="flex h-full flex-col p-5">
-      <div className="flex items-start justify-between gap-3">
-        <Link to={`/projects/${project.id}`} className="min-w-0 text-base font-semibold text-slate-900 hover:text-brand-600">
-          <span className="line-clamp-2">{project.name}</span>
-        </Link>
-        {project.team_name && (
-          <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-            {project.team_name}
-          </span>
+    <Card className="flex h-full flex-col p-5 transition hover:shadow-md">
+      <div className="flex items-start gap-3">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-xl font-display text-base font-bold text-white",
+            projectColor(project.id),
+          )}
+        >
+          {project.name.trim()[0]?.toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <Link to={`/projects/${project.id}`} className="text-base font-semibold text-slate-900 hover:text-brand-600">
+            <span className="line-clamp-1">{project.name}</span>
+          </Link>
+          <p className="text-xs text-slate-500">{project.team_name ? `${project.team_name} team` : "No team"}</p>
+        </div>
+        {health && (
+          <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold", health.className)}>{health.label}</span>
         )}
       </div>
-      <p className="mt-1 line-clamp-2 min-h-10 text-sm text-slate-500">{project.description || "No description."}</p>
+      <p className="mt-3 line-clamp-2 min-h-10 text-sm text-slate-600">{project.description || "No description."}</p>
       <div className="mt-4">
         <div className="mb-1.5 flex justify-between text-xs text-slate-500">
           <span>
-            {project.completed_count} of {project.task_count} tasks done
+            {project.task_count - project.completed_count} open · {project.completed_count} of {project.task_count} done
           </span>
           <span className="font-medium tabular-nums text-slate-700">{project.progress}%</span>
         </div>
@@ -63,7 +86,7 @@ function ProjectCard({ project, canManage, onEdit, onToggleArchive, onDelete }: 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
         {project.due_date && (
           <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-            <CalendarIcon className="size-3.5" /> {formatDate(project.due_date)}
+            <CalendarIcon className="size-3.5" /> Due {formatDate(project.due_date)}
           </span>
         )}
         <div className="ml-auto flex gap-1">
@@ -100,9 +123,17 @@ export function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<Project | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // The sidebar's "+" links here with ?new=1 to open the create dialog.
+  useEffect(() => {
+    if (searchParams.get("new") !== "1") return;
+    if (canManage) setCreating(true);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, canManage]);
 
   // Debounce the search box so we don't fire a request per keystroke.
   useEffect(() => {

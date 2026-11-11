@@ -35,7 +35,7 @@ export function ActivityPage() {
         title="Activity"
         description="A history of everything that happened in this organization."
         actions={
-          <Select aria-label="Filter by project" value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-56">
+          <Select aria-label="Filter by project" value={projectId} onChange={(e) => setProjectId(e.target.value)} className="sm:w-56">
             <option value="">All projects</option>
             {projects.data?.map((p) => (
               <option key={p.id} value={p.id}>

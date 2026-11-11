@@ -147,7 +147,7 @@ export function TeamPage() {
           const canEditRole = canManage && options.length > 0 && !(m.role === "owner" && ownerCount <= 1);
           const canRemove = isMe ? !(m.role === "owner" && ownerCount <= 1) : canManage && (isOwner || m.role !== "owner");
           return (
-            <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
+            <li key={m.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/60">
               <Avatar user={m.user} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-900">
@@ -157,27 +157,34 @@ export function TeamPage() {
                   {m.user.email} · joined {formatDate(m.joined_at)}
                 </p>
               </div>
-              {canEditRole ? (
-                <Select
-                  aria-label={`Role for ${m.user.full_name}`}
-                  value={m.role}
-                  onChange={(e) => void changeRole(m, e.target.value as Role)}
-                  className="w-28 py-1.5"
-                >
-                  {options.map((r) => (
-                    <option key={r} value={r}>
-                      {ROLE_META[r].label}
-                    </option>
-                  ))}
-                </Select>
-              ) : (
-                <RoleBadge role={m.role} />
-              )}
-              {canRemove && (
-                <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setRemoving(m)}>
-                  {isMe ? "Leave" : "Remove"}
-                </Button>
-              )}
+              <div className="flex shrink-0 items-center gap-2">
+                {canEditRole ? (
+                  // Select is w-full by default, so the wrapper sets the width.
+                  <div className="w-32">
+                    <Select
+                      aria-label={`Role for ${m.user.full_name}`}
+                      value={m.role}
+                      onChange={(e) => void changeRole(m, e.target.value as Role)}
+                      className="py-1.5"
+                    >
+                      {options.map((r) => (
+                        <option key={r} value={r}>
+                          {ROLE_META[r].label}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                ) : (
+                  <RoleBadge role={m.role} />
+                )}
+                <div className="w-16 text-right">
+                  {canRemove && (
+                    <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setRemoving(m)}>
+                      {isMe ? "Leave" : "Remove"}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </li>
           );
         })}

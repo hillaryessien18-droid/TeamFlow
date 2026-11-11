@@ -9,6 +9,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { InvitePage } from "./pages/InvitePage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
+import { MyTasksPage } from "./pages/MyTasksPage";
 import { ForgotPasswordPage, ResetPasswordPage } from "./pages/PasswordResetPages";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ProjectBoardPage } from "./pages/ProjectBoardPage";
@@ -44,6 +45,7 @@ export function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route element={<Layout />}>
           <Route index element={<DashboardPage />} />
+          <Route path="/my-tasks" element={<MyTasksPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:projectId" element={<ProjectBoardPage />} />
           <Route path="/team" element={<TeamPage />} />

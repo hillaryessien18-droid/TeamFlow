@@ -35,3 +35,10 @@ export const LABEL_META: Record<LabelColor, { chip: string; swatch: string }> = 
   violet: { chip: "bg-violet-50 text-violet-700 ring-violet-600/20", swatch: "bg-violet-500" },
   rose: { chip: "bg-rose-50 text-rose-700 ring-rose-600/20", swatch: "bg-rose-500" },
 };
+
+/** Accent colors for projects, picked from the project id so each project keeps its color. */
+const PROJECT_COLORS = ["bg-sky-500", "bg-violet-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-indigo-500", "bg-teal-500"];
+
+export function projectColor(id: number): string {
+  return PROJECT_COLORS[id % PROJECT_COLORS.length];
+}

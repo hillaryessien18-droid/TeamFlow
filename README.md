@@ -37,9 +37,17 @@ Captured from the seeded demo organization (`python manage.py seed_demo`).
 
 ![Kanban board](docs/screenshots/board.png)
 
-**Task details:** edit status, priority, assignee, deadline and labels, and use the tabs for comments, files and history.
+**Task details:** the description and discussion on the left, with status, assignee, priority, deadline and labels in a details panel on the right.
 
 ![Task details](docs/screenshots/task.png)
+
+**My Tasks:** everything assigned to you across projects, grouped by deadline, with one-click completion.
+
+![My Tasks](docs/screenshots/my-tasks.png)
+
+**List view:** the same tasks as the board, in a table grouped by status.
+
+![List view](docs/screenshots/list.png)
 
 | Landing page | Log in |
 | ------------ | ------ |
@@ -55,7 +63,9 @@ Captured from the seeded demo organization (`python manage.py seed_demo`).
 - **Organizations & teams:** create multiple organizations, switch between them, change roles, remove members or leave, and group members into teams.
 - **Invitations:** existing users are added right away. Anyone else gets an email invitation link that expires after 7 days. Admins can resend or revoke pending invitations, and the invitee accepts by logging in or creating an account with the invited email.
 - **Projects:** create, edit, delete, archive and restore projects. Archived projects are read-only. Projects can be searched and attached to a team.
-- **Kanban board:** drag-and-drop tasks between and within the To Do, In Progress and Completed columns. Card order is saved on the server. The board can be filtered by text, assignee and priority.
+- **Kanban board and list view:** drag-and-drop tasks between and within the To Do, In Progress and Completed columns, or switch to a table view grouped by status. Card order is saved on the server. Tasks can be filtered by text, assignee, priority, label and deadline.
+- **My Tasks:** a personal inbox of every task assigned to you across the organization's projects, grouped into Overdue, Due today, Next 7 days, Later and No deadline. A checkbox marks a task as done.
+- **Navigation:** the sidebar lists active projects with their open-task counts, and project cards show a health status (On track, Due soon, Overdue, Complete).
 - **Tasks:** title, description, priority (Low/Medium/High/Urgent), deadline with overdue highlighting, assignee (who must be a member of the organization), and a completion timestamp.
 - **Labels & attachments:** colour-coded labels shared across the organization (filter tasks with `?label=`), and file uploads on tasks (size limit set by `MAX_ATTACHMENT_MB`, 10 MB by default).
 - **Comments & activity history:** threaded discussion per task (authors can edit their comments, and admins can moderate them). An append-only audit log covers the organization, each project and each task.
@@ -254,7 +264,7 @@ cd backend
 pytest
 ```
 
-**Frontend:** Vitest + React Testing Library tests cover login/register/reset flows, route protection, session restore, Kanban rendering, drag-and-drop, keyboard access, read-only boards, board ordering logic, and error formatting.
+**Frontend:** Vitest + React Testing Library tests cover login/register/reset flows, route protection, session restore, Kanban rendering, drag-and-drop, keyboard access, read-only boards, board ordering logic, the My Tasks page, and error formatting.
 
 ```bash
 cd frontend
